@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PHOTO_CONVERT // Batch Converter</title>
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-void:#030008; --bg-base:#0a0514; --bg-panel:#0f0a1e; --bg-card:#150d28;
+  --bg-header:#09061a; --bg-nav:#07041a; --bg-input:#0c0820;
+  --accent-primary:#00ffcc; --accent-secondary:#ff4dd2; --accent-tertiary:#ffe600;
+  --accent-dim:#006655; --accent-red:#ff3333;
+  --text-body:#c0b8d4; --text-muted:#6a607a;
+  --font-display:'VT323','Courier New',monospace;
+  --font-body:'Share Tech Mono','Lucida Console',monospace;
+  --gap-sm:8px; --gap-md:16px; --gap-lg:24px;
+  --glow-mint:0 0 6px #00ffcc88,0 0 14px #00ffcc44;
+  --glow-pink:0 0 6px #ff4dd288,0 0 14px #ff4dd244;
+  --glow-yellow:0 0 6px #ffe60088,0 0 14px #ffe60044;
+  --glow-text:0 0 8px #00ffcccc;
+  --border-bright:1px solid #00ffcc; --border-dim:1px solid #006655;
+  --border-pink:1px solid #ff4dd2;
+  --transition:0.15s ease;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;}
+body{
+  background:var(--bg-base);color:var(--text-body);font-family:var(--font-body);
+  font-size:13px;line-height:1.6;display:flex;flex-direction:column;
+  background-image:
+    radial-gradient(circle at 50% 0%,#1a0040 0%,transparent 55%),
+    repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,255,204,.012) 3px,rgba(0,255,204,.012) 4px),
+    repeating-linear-gradient(90deg,transparent,transparent 3px,rgba(0,255,204,.012) 3px,rgba(0,255,204,.012) 4px);
+}
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;
+  background:repeating-linear-gradient(to bottom,transparent 0,transparent 2px,rgba(0,0,0,.07) 2px,rgba(0,0,0,.07) 4px);
+}
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:var(--bg-void);}
+::-webkit-scrollbar-thumb{background:var(--accent-dim);}
+::-webkit-scrollbar-thumb:hover{background:var(--accent-primary);}
+.blink{animation:blink 1s step-end infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+
+/* HEADER */
+#header{
+  flex-shrink:0;background:var(--bg-header);
+  background-image:
+    repeating-linear-gradient(135deg,transparent 0,transparent 20px,rgba(0,255,204,.025) 20px,rgba(0,255,204,.025) 21px),
+    radial-gradient(ellipse at 25% 50%,#1a003a 0%,transparent 65%),
+    radial-gradient(ellipse at 75% 50%,#003322 0%,transparent 60%);
+  border-bottom:2px solid var(--accent-primary);
+  padding:10px var(--gap-lg);display:flex;align-items:center;justify-content:space-between;
+  position:relative;overflow:hidden;
+}
+#header::after{
+  content:'';position:absolute;bottom:0;left:0;right:0;height:2px;
+  background:linear-gradient(to right,transparent,var(--accent-primary),var(--accent-secondary),var(--accent-primary),transparent);
+  box-shadow:var(--glow-mint);
+}
+.header-brand h1{font-family:var(--font-display);font-size:2rem;color:var(--accent-primary);text-shadow:var(--glow-text);letter-spacing:4px;line-height:1;}
+.header-brand p{font-size:.65rem;color:var(--accent-secondary);letter-spacing:3px;margin-top:2px;text-transform:uppercase;}
+
+/* MODE TABS */
+#mode-tabs{
+  flex-shrink:0;background:var(--bg-nav);border-bottom:var(--border-bright);
+  display:flex;height:38px;
+}
+.mode-tab{
+  display:flex;align-items:center;gap:6px;
+  padding:0 var(--gap-md);font-family:var(--font-display);font-size:1.1rem;
+  letter-spacing:1.5px;color:var(--text-muted);cursor:pointer;
+  border-right:var(--border-dim);transition:all var(--transition);
+}
+.mode-tab:first-child{border-left:var(--border-dim);}
+.mode-tab:hover{color:var(--accent-primary);background:var(--bg-card);}
+.mode-tab.active{color:#fff;background:var(--bg-card);border-bottom:2px solid var(--accent-primary);text-shadow:var(--glow-text);}
+.mode-tab .dot{width:6px;height:6px;border-radius:50%;background:var(--text-muted);transition:background var(--transition),box-shadow var(--transition);}
+.mode-tab.active .dot{background:var(--accent-primary);box-shadow:var(--glow-mint);}
+
+/* SETTINGS BAR */
+#settings-bar{
+  flex-shrink:0;background:var(--bg-nav);border-bottom:var(--border-bright);
+  padding:8px var(--gap-lg);display:flex;align-items:center;gap:var(--gap-lg);flex-wrap:wrap;
+}
+.setting-group{display:flex;align-items:center;gap:var(--gap-sm);}
+.setting-label{font-family:var(--font-display);font-size:1rem;color:var(--text-muted);letter-spacing:1.5px;white-space:nowrap;}
+.format-btn{
+  background:var(--bg-card);border:var(--border-dim);color:var(--text-muted);
+  font-family:var(--font-display);font-size:1rem;letter-spacing:1px;
+  padding:4px 14px;cursor:pointer;transition:all var(--transition);
+}
+.format-btn:hover{border-color:var(--accent-primary);color:var(--accent-primary);}
+.format-btn.active{border-color:var(--accent-primary);background:rgba(0,255,204,.12);color:var(--accent-primary);box-shadow:var(--glow-mint);}
+.format-btn.source.active{border-color:var(--accent-secondary);background:rgba(255,77,210,.1);color:var(--accent-secondary);box-shadow:var(--glow-pink);}
+.arrow-sep{font-family:var(--font-display);font-size:1.4rem;color:var(--accent-dim);}
+.quality-group{display:flex;align-items:center;gap:var(--gap-sm);margin-left:auto;}
+.quality-label-text{font-family:var(--font-display);font-size:1rem;color:var(--text-muted);letter-spacing:1px;white-space:nowrap;}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100px;height:4px;background:var(--bg-card);border:var(--border-dim);outline:none;cursor:pointer;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;background:var(--accent-primary);box-shadow:var(--glow-mint);cursor:pointer;}
+input[type=range]:hover{border-color:var(--accent-primary);}
+.quality-val{font-family:var(--font-display);font-size:1rem;color:var(--accent-primary);min-width:32px;}
+.bar-sep{width:1px;height:22px;background:var(--accent-dim);flex-shrink:0;}
+
+/* MAIN */
+#main{flex:1;display:flex;overflow:hidden;min-height:0;}
+
+/* LEFT PANE */
+#left-pane{width:320px;min-width:320px;background:var(--bg-panel);border-right:var(--border-bright);display:flex;flex-direction:column;overflow:hidden;}
+
+/* DROP ZONES */
+.drop-zone{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:var(--gap-md);padding:var(--gap-lg);
+  border:2px dashed var(--accent-dim);margin:var(--gap-md);
+  cursor:pointer;transition:border-color var(--transition),background var(--transition);
+  text-align:center;min-height:0;
+}
+.drop-zone:hover,.drop-zone.drag-over{border-color:var(--accent-primary);background:rgba(0,255,204,.04);}
+.drop-zone.loaded{border-style:solid;border-color:var(--accent-primary);background:rgba(0,255,204,.04);}
+.drop-zone.unzip-zone:hover,.drop-zone.unzip-zone.drag-over{border-color:var(--accent-secondary);background:rgba(255,77,210,.04);}
+.drop-zone.unzip-zone.loaded{border-style:solid;border-color:var(--accent-secondary);background:rgba(255,77,210,.04);}
+.drop-icon{font-size:3rem;color:var(--accent-dim);transition:color var(--transition);}
+.drop-zone:hover .drop-icon,.drop-zone.drag-over .drop-icon,.drop-zone.loaded .drop-icon{color:var(--accent-primary);}
+.drop-zone.unzip-zone:hover .drop-icon,.drop-zone.unzip-zone.drag-over .drop-icon,.drop-zone.unzip-zone.loaded .drop-icon{color:var(--accent-secondary);}
+.drop-title{font-family:var(--font-display);font-size:1.4rem;color:var(--text-muted);letter-spacing:2px;transition:color var(--transition);}
+.drop-zone:hover .drop-title,.drop-zone.drag-over .drop-title,.drop-zone.loaded .drop-title{color:var(--accent-primary);}
+.drop-zone.unzip-zone:hover .drop-title,.drop-zone.unzip-zone.drag-over .drop-title,.drop-zone.unzip-zone.loaded .drop-title{color:var(--accent-secondary);}
+.drop-sub{font-size:.7rem;color:var(--text-muted);letter-spacing:1px;line-height:1.6;}
+
+/* INFO STRIP */
+.info-strip{
+  flex-shrink:0;padding:var(--gap-sm) var(--gap-md);
+  border-top:var(--border-dim);background:var(--bg-card);
+  font-size:.72rem;color:var(--text-muted);letter-spacing:.5px;
+  display:none;gap:var(--gap-md);flex-wrap:wrap;
+}
+.info-strip.show{display:flex;}
+.fi-item{display:flex;gap:5px;align-items:center;}
+.fi-label{color:var(--text-muted);}
+.fi-val{color:var(--accent-primary);font-family:var(--font-display);font-size:.9rem;}
+
+#left-actions{flex-shrink:0;padding:var(--gap-sm) var(--gap-md);border-top:var(--border-dim);display:flex;gap:var(--gap-sm);flex-wrap:wrap;}
+
+/* RIGHT PANE */
+#right-pane{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;}
+#file-list-header{
+  flex-shrink:0;background:var(--bg-nav);border-bottom:var(--border-dim);
+  padding:6px var(--gap-md);display:flex;align-items:center;
+  gap:var(--gap-md);font-size:.7rem;color:var(--text-muted);letter-spacing:1px;
+}
+.header-col-name{flex:1;min-width:0;}
+.header-col-size{width:70px;text-align:right;flex-shrink:0;}
+.header-col-status{width:120px;text-align:center;flex-shrink:0;}
+#file-list{flex:1;overflow-y:auto;}
+.file-row{
+  display:flex;align-items:center;gap:var(--gap-md);
+  padding:6px var(--gap-md);
+  border-bottom:1px solid rgba(0,255,204,.05);
+  transition:background var(--transition);
+}
+.file-row:hover{background:var(--bg-card);}
+.file-icon-col{font-size:.9rem;flex-shrink:0;width:18px;text-align:center;}
+.file-name{flex:1;min-width:0;font-size:.8rem;color:var(--text-body);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.file-size{width:70px;text-align:right;font-size:.7rem;color:var(--text-muted);flex-shrink:0;}
+.file-status{width:120px;text-align:center;flex-shrink:0;font-family:var(--font-display);font-size:.85rem;letter-spacing:1px;}
+.status-pending   {color:var(--text-muted);}
+.status-converting{color:var(--accent-tertiary);}
+.status-done      {color:var(--accent-primary);}
+.status-error     {color:var(--accent-red);}
+
+/* EMPTY STATE */
+#empty-state{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:var(--gap-md);color:var(--text-muted);padding:var(--gap-lg);text-align:center;
+}
+.empty-icon{font-size:2.5rem;color:var(--accent-dim);}
+.empty-text{font-size:.8rem;letter-spacing:1px;line-height:1.8;}
+
+/* PROGRESS */
+#progress-bar-wrap{flex-shrink:0;background:var(--bg-nav);border-top:var(--border-dim);padding:8px var(--gap-md);display:none;gap:var(--gap-md);align-items:center;}
+#progress-bar-wrap.show{display:flex;}
+#progress-track{flex:1;height:8px;background:var(--bg-void);border:var(--border-dim);position:relative;}
+#progress-fill{height:100%;background:linear-gradient(to right,var(--accent-primary),var(--accent-secondary));width:0%;transition:width .1s linear;}
+#progress-label{font-family:var(--font-display);font-size:.9rem;color:var(--accent-primary);letter-spacing:1px;white-space:nowrap;min-width:110px;text-align:right;}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:5px;background:transparent;border:var(--border-bright);color:var(--accent-primary);padding:5px 12px;font-family:var(--font-display);font-size:.95rem;letter-spacing:1px;cursor:pointer;transition:background var(--transition),box-shadow var(--transition);white-space:nowrap;}
+.btn:hover{background:var(--accent-primary);color:var(--bg-void);box-shadow:var(--glow-mint);}
+.btn:disabled{opacity:.3;cursor:not-allowed;pointer-events:none;}
+.btn-pink{border-color:var(--accent-secondary);color:var(--accent-secondary);}
+.btn-pink:hover{background:var(--accent-secondary);color:var(--bg-void);box-shadow:var(--glow-pink);}
+.btn-sm{padding:3px 9px;font-size:.82rem;}
+.btn-danger{border-color:var(--accent-red);color:var(--accent-red);}
+.btn-danger:hover{background:var(--accent-red);color:#fff;}
+.btn-lg{padding:8px 24px;font-size:1.2rem;letter-spacing:2px;}
+
+/* TOAST */
+#toast{position:fixed;bottom:20px;right:20px;background:var(--bg-card);border:var(--border-bright);box-shadow:var(--glow-mint);color:var(--accent-primary);font-family:var(--font-display);font-size:1rem;letter-spacing:1px;padding:8px 16px;z-index:9000;opacity:0;transform:translateY(8px);transition:opacity .2s,transform .2s;pointer-events:none;}
+#toast.show{opacity:1;transform:translateY(0);}
+#folder-input,#zip-input{display:none;}
+</style>
+</head>
+<body>
+
+<div id="header">
+  <div class="header-brand">
+    <h1>PHOTO_CONVERT<span class="blink">_</span></h1>
+    <p>// batch converter &amp; zip tool // v2.0 // no internet required</p>
+  </div>
+</div>
+
+<div id="mode-tabs">
+  <div class="mode-tab active" data-mode="convert" onclick="switchMode('convert')">
+    <div class="dot"></div> CONVERT + ZIP
+  </div>
+  <div class="mode-tab" data-mode="unzip" onclick="switchMode('unzip')">
+    <div class="dot"></div> UNZIP + EXTRACT
+  </div>
+</div>
+
+<div id="settings-bar">
+  <div class="setting-group">
+    <span class="setting-label">FROM:</span>
+    <button class="format-btn source active" data-source="image/png"  onclick="setSource('image/png')">PNG</button>
+    <button class="format-btn source"        data-source="image/jpeg" onclick="setSource('image/jpeg')">JPEG</button>
+    <button class="format-btn source"        data-source="image/webp" onclick="setSource('image/webp')">WEBP</button>
+  </div>
+  <span class="arrow-sep">⟶</span>
+  <div class="setting-group">
+    <span class="setting-label">TO:</span>
+    <button class="format-btn active" data-target="image/jpeg" onclick="setTarget('image/jpeg')">JPEG</button>
+    <button class="format-btn"        data-target="image/webp" onclick="setTarget('image/webp')">WEBP</button>
+    <button class="format-btn"        data-target="image/png"  onclick="setTarget('image/png')">PNG</button>
+  </div>
+  <div class="bar-sep"></div>
+  <div class="quality-group" id="quality-group">
+    <span class="quality-label-text">QUALITY:</span>
+    <input type="range" id="quality-slider" min="1" max="100" value="92"
+      oninput="document.getElementById('quality-val').textContent=this.value+'%'">
+    <span class="quality-val" id="quality-val">92%</span>
+  </div>
+</div>
+
+<div id="main">
+  <div id="left-pane">
+
+    <!-- CONVERT drop zone -->
+    <div class="drop-zone" id="convert-drop"
+      onclick="document.getElementById('folder-input').click()"
+      ondragover="onDragOver(event,'convert-drop')"
+      ondragleave="onDragLeave(event,'convert-drop')"
+      ondrop="onDropConvert(event)">
+      <div class="drop-icon">📁</div>
+      <div class="drop-title" id="convert-drop-title">DROP FOLDER HERE</div>
+      <div class="drop-sub">or click to browse<br>Scans all images of the source type<br>Output: single .zip file</div>
+    </div>
+
+    <!-- UNZIP drop zone (hidden until that mode) -->
+    <div class="drop-zone unzip-zone" id="unzip-drop" style="display:none;"
+      onclick="document.getElementById('zip-input').click()"
+      ondragover="onDragOver(event,'unzip-drop')"
+      ondragleave="onDragLeave(event,'unzip-drop')"
+      ondrop="onDropUnzip(event)">
+      <div class="drop-icon">📦</div>
+      <div class="drop-title" id="unzip-drop-title">DROP ZIP HERE</div>
+      <div class="drop-sub">or click to browse<br>Extracts all images from the zip<br>Downloads each file individually</div>
+    </div>
+
+    <input type="file" id="folder-input" webkitdirectory multiple
+      accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp"
+      onchange="onFolderSelected(this.files)">
+    <input type="file" id="zip-input" accept=".zip"
+      onchange="onZipSelected(this.files[0])">
+
+    <div class="info-strip" id="info-strip">
+      <div class="fi-item"><span class="fi-label">SOURCE</span><span class="fi-val" id="fi-folder">—</span></div>
+      <div class="fi-item"><span class="fi-label">FILES</span><span class="fi-val" id="fi-found">0</span></div>
+      <div class="fi-item"><span class="fi-label" id="fi-skip-label">SKIPPED</span><span class="fi-val" id="fi-skipped">0</span></div>
+    </div>
+
+    <div id="left-actions">
+      <button class="btn btn-lg" id="action-btn" onclick="doAction()" disabled>▶ CONVERT ALL</button>
+      <button class="btn btn-sm btn-danger" id="clear-btn" onclick="clearAll()" disabled>✕ CLEAR</button>
+    </div>
+  </div>
+
+  <div id="right-pane">
+    <div id="file-list-header">
+      <div class="file-icon-col" style="width:18px;flex-shrink:0;"></div>
+      <div class="header-col-name">FILENAME</div>
+      <div class="header-col-size">SIZE</div>
+      <div class="header-col-status">STATUS</div>
+    </div>
+    <div id="file-list">
+      <div id="empty-state">
+        <div class="empty-icon">🖼</div>
+        <div class="empty-text" id="empty-text">DROP A FOLDER OR CLICK TO BROWSE.<br>ALL MATCHING IMAGES WILL BE LISTED HERE.</div>
+      </div>
+    </div>
+    <div id="progress-bar-wrap">
+      <div id="progress-track"><div id="progress-fill"></div></div>
+      <div id="progress-label">0 / 0</div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+'use strict';
+
+// ============================================================
+// STATE
+// ============================================================
+let mode       = 'convert';
+let sourceType = 'image/png';
+let targetType = 'image/jpeg';
+let quality    = 92;
+let fileItems  = [];
+let busy       = false;
+let folderName = '';
+let zipFile    = null;
+
+const EXT = { 'image/png':'png', 'image/jpeg':'jpg', 'image/webp':'webp' };
+const FMT = { 'image/png':'PNG', 'image/jpeg':'JPEG', 'image/webp':'WEBP' };
+const SL  = { pending:'—', converting:'...', done:'✓ DONE', error:'✕ ERROR' };
+
+// ============================================================
+// INIT
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => {
+  updateQualityVisibility();
+  document.addEventListener('dragover', e => e.preventDefault());
+  document.addEventListener('drop',     e => e.preventDefault());
+});
+
+// ============================================================
+// MODE SWITCHING
+// ============================================================
+function switchMode(m) {
+  mode = m;
+  document.querySelectorAll('.mode-tab').forEach(t => t.classList.toggle('active', t.dataset.mode === m));
+  const isConvert = m === 'convert';
+  document.getElementById('settings-bar').style.display  = isConvert ? '' : 'none';
+  document.getElementById('convert-drop').style.display  = isConvert ? '' : 'none';
+  document.getElementById('unzip-drop').style.display    = isConvert ? 'none' : '';
+  document.getElementById('fi-skip-label').textContent   = isConvert ? 'SKIPPED' : 'NON-IMG';
+  document.getElementById('action-btn').textContent      = isConvert ? '▶ CONVERT ALL' : '⬇ EXTRACT ALL';
+  document.getElementById('empty-text').textContent      = isConvert
+    ? 'DROP A FOLDER OR CLICK TO BROWSE.\nALL MATCHING IMAGES WILL BE LISTED HERE.'
+    : 'DROP A ZIP FILE OR CLICK TO BROWSE.\nALL IMAGES INSIDE WILL BE LISTED HERE.';
+  clearAll();
+}
+
+// ============================================================
+// FORMAT SELECTION
+// ============================================================
+function setSource(mime) {
+  sourceType = mime;
+  document.querySelectorAll('.format-btn.source').forEach(b => b.classList.toggle('active', b.dataset.source === mime));
+  refilterFiles();
+  updateQualityVisibility();
+}
+function setTarget(mime) {
+  targetType = mime;
+  document.querySelectorAll('.format-btn:not(.source)').forEach(b => b.classList.toggle('active', b.dataset.target === mime));
+  refilterFiles();
+  updateQualityVisibility();
+}
+function updateQualityVisibility() {
+  const show = targetType !== 'image/png';
+  document.getElementById('quality-group').style.opacity       = show ? '1' : '0.3';
+  document.getElementById('quality-group').style.pointerEvents = show ? '' : 'none';
+}
+
+// ============================================================
+// DROP ZONE EVENTS
+// ============================================================
+function onDragOver(e, id) {
+  e.preventDefault(); e.stopPropagation();
+  document.getElementById(id).classList.add('drag-over');
+}
+function onDragLeave(e, id) {
+  e.stopPropagation();
+  document.getElementById(id).classList.remove('drag-over');
+}
+
+function onDropConvert(e) {
+  e.preventDefault(); e.stopPropagation();
+  document.getElementById('convert-drop').classList.remove('drag-over');
+  const items   = Array.from(e.dataTransfer.items || []);
+  const rawFiles = Array.from(e.dataTransfer.files || []);
+  const entries = items.map(i => i.webkitGetAsEntry ? i.webkitGetAsEntry() : null).filter(Boolean);
+  if (entries.length) {
+    const all = []; let pending = 0; let rootName = '';
+    const readEntry = en => {
+      if (en.isFile) {
+        pending++;
+        en.file(f => { all.push(f); pending--; if (!pending) { folderName = rootName || 'folder'; processConvertFiles(all); } });
+      } else if (en.isDirectory) {
+        if (!rootName) rootName = en.name;
+        const reader = en.createReader();
+        const readBatch = () => {
+          pending++;
+          reader.readEntries(res => {
+            pending--;
+            if (res.length) { res.forEach(readEntry); readBatch(); }
+            if (!pending) { folderName = rootName || 'folder'; processConvertFiles(all); }
+          });
+        };
+        readBatch();
+      }
+    };
+    entries.forEach(readEntry);
+    if (!pending && entries.length) { folderName = ''; processConvertFiles(all); }
+  } else if (rawFiles.length) {
+    folderName = 'dropped files';
+    processConvertFiles(rawFiles);
+  }
+}
+
+function onFolderSelected(fileList) {
+  const files = Array.from(fileList);
+  if (!files.length) return;
+  const fp = files[0].webkitRelativePath || files[0].name;
+  folderName = fp.includes('/') ? fp.split('/')[0] : 'selected folder';
+  processConvertFiles(files);
+  document.getElementById('folder-input').value = '';
+}
+
+function onDropUnzip(e) {
+  e.preventDefault(); e.stopPropagation();
+  document.getElementById('unzip-drop').classList.remove('drag-over');
+  const files = Array.from(e.dataTransfer.files || []);
+  const zip   = files.find(f => f.name.toLowerCase().endsWith('.zip'));
+  if (!zip) { showToast('PLEASE DROP A .ZIP FILE'); return; }
+  onZipSelected(zip);
+}
+function onZipSelected(file) {
+  if (!file) return;
+  zipFile = file;
+  readZipContents(file);
+  document.getElementById('zip-input').value = '';
+}
+
+// ============================================================
+// PROCESS — CONVERT FILES
+// ============================================================
+function processConvertFiles(rawFiles) {
+  const matched = rawFiles.filter(f => matchesMime(f, sourceType));
+  const skipped = rawFiles.filter(f =>
+    (matchesMime(f,'image/png')||matchesMime(f,'image/jpeg')||matchesMime(f,'image/webp'))
+    && !matchesMime(f, sourceType)
+  ).length;
+
+  fileItems = matched.map(f => ({ file:f, name:f.name, size:f.size, status:'pending' }));
+
+  document.getElementById('convert-drop').classList.add('loaded');
+  document.getElementById('convert-drop-title').textContent = '✓ ' + folderName;
+  showInfoStrip(folderName, matched.length, skipped);
+
+  const canGo = matched.length > 0 && sourceType !== targetType;
+  document.getElementById('action-btn').disabled = !canGo;
+  document.getElementById('clear-btn').disabled  = false;
+  renderFileList();
+  hideProgress();
+
+  if (!matched.length)   showToast('NO ' + FMT[sourceType] + ' FILES FOUND');
+  else if (!canGo)       showToast('SOURCE AND TARGET FORMAT ARE THE SAME');
+  else showToast(matched.length + ' FILE' + (matched.length > 1 ? 'S' : '') + ' READY');
+}
+
+// ============================================================
+// PROCESS — READ ZIP CONTENTS
+// ============================================================
+async function readZipContents(file) {
+  try {
+    const buf     = await file.arrayBuffer();
+    const entries = parseZip(buf);
+    const imgRx   = /\.(png|jpe?g|webp)$/i;
+    const images  = entries.filter(e => !e.isDir && imgRx.test(e.name));
+    const others  = entries.filter(e => !e.isDir && !imgRx.test(e.name)).length;
+
+    fileItems = images.map(e => ({
+      zipEntry: e,
+      name:     e.name.split('/').pop(),
+      fullPath: e.name,
+      size:     e.uncompressedSize,
+      status:   'pending',
+    }));
+
+    document.getElementById('unzip-drop').classList.add('loaded');
+    document.getElementById('unzip-drop-title').textContent = '✓ ' + file.name;
+    showInfoStrip(file.name, images.length, others);
+    document.getElementById('action-btn').disabled = images.length === 0;
+    document.getElementById('clear-btn').disabled  = false;
+    renderFileList();
+    hideProgress();
+    showToast(!images.length ? 'NO IMAGES IN ZIP' : images.length + ' IMAGE' + (images.length > 1 ? 'S' : '') + ' FOUND');
+  } catch(err) {
+    showToast('FAILED TO READ ZIP'); console.error(err);
+  }
+}
+
+function showInfoStrip(src, found, skip) {
+  document.getElementById('info-strip').classList.add('show');
+  document.getElementById('fi-folder').textContent  = src;
+  document.getElementById('fi-found').textContent   = found;
+  document.getElementById('fi-skipped').textContent = skip;
+}
+
+function matchesMime(file, mime) {
+  const m = (file.type||'').toLowerCase(), n = file.name.toLowerCase();
+  if (mime === 'image/png')  return m === 'image/png'  || n.endsWith('.png');
+  if (mime === 'image/jpeg') return m === 'image/jpeg' || m === 'image/jpg' || n.endsWith('.jpg') || n.endsWith('.jpeg');
+  if (mime === 'image/webp') return m === 'image/webp' || n.endsWith('.webp');
+  return false;
+}
+function refilterFiles() {
+  if (!fileItems.length && !folderName) return;
+  renderFileList();
+  document.getElementById('action-btn').disabled = fileItems.length === 0 || (mode === 'convert' && sourceType === targetType);
+}
+
+// ============================================================
+// FILE LIST RENDER
+// ============================================================
+function renderFileList() {
+  const list = document.getElementById('file-list');
+  if (!fileItems.length) {
+    list.innerHTML = `<div id="empty-state">
+      <div class="empty-icon">${mode==='unzip'?'📦':'🖼'}</div>
+      <div class="empty-text" id="empty-text">${document.getElementById('empty-text') ? document.getElementById('empty-text').textContent : ''}</div>
+    </div>`;
+    return;
+  }
+  list.innerHTML = fileItems.map((item, i) => `
+    <div class="file-row">
+      <div class="file-icon-col">${iconFor(item.name)}</div>
+      <div class="file-name" title="${escHtml(item.name)}">${escHtml(item.name)}</div>
+      <div class="file-size">${fmtSize(item.size)}</div>
+      <div class="file-status status-${item.status}" id="status-${i}">${SL[item.status]||item.status}</div>
+    </div>`).join('');
+}
+
+function setRowStatus(i, status) {
+  const el = document.getElementById('status-'+i);
+  if (!el) return;
+  el.className   = 'file-status status-'+status;
+  el.textContent = SL[status] || status;
+}
+
+function iconFor(name) {
+  const n = name.toLowerCase();
+  if (n.endsWith('.png'))                         return '🟦';
+  if (n.endsWith('.jpg')||n.endsWith('.jpeg'))    return '🟧';
+  if (n.endsWith('.webp'))                        return '🟩';
+  return '🖼';
+}
+
+// ============================================================
+// ACTION DISPATCHER
+// ============================================================
+function doAction() {
+  if (mode === 'convert') startConversion();
+  else                    startExtraction();
+}
+
+// ============================================================
+// CONVERSION  →  single ZIP output (no external library)
+// ============================================================
+async function startConversion() {
+  if (busy || !fileItems.length) return;
+  busy = true;
+  document.getElementById('action-btn').disabled = true;
+  document.getElementById('clear-btn').disabled  = true;
+  quality = parseInt(document.getElementById('quality-slider').value);
+
+  const total  = fileItems.length;
+  let done     = 0;
+  const canvas = document.createElement('canvas');
+  const ctx    = canvas.getContext('2d');
+  const zFiles = []; // { name, data: Uint8Array }
+
+  fileItems.forEach((it, i) => { it.status = 'pending'; setRowStatus(i, 'pending'); });
+  showProgress(0, total);
+
+  for (let i = 0; i < fileItems.length; i++) {
+    const item = fileItems[i];
+    setRowStatus(i, 'converting');
+    try {
+      const blob = await convertImage(item.file, canvas, ctx, targetType, quality);
+      const buf  = await blob.arrayBuffer();
+      zFiles.push({ name: newFilename(item.name, targetType), data: new Uint8Array(buf) });
+      item.status = 'done'; setRowStatus(i, 'done');
+    } catch(err) {
+      item.status = 'error'; setRowStatus(i, 'error'); console.error(item.name, err);
+    }
+    done++; showProgress(done, total); await sleep(10);
+  }
+
+  if (zFiles.length) {
+    setProgressLabel('ZIPPING...');
+    const zipData = buildZip(zFiles);
+    downloadBlob(new Blob([zipData], {type:'application/zip'}), (folderName||'converted')+'_converted.zip');
+  }
+
+  busy = false;
+  document.getElementById('clear-btn').disabled = false;
+  const errors = fileItems.filter(f => f.status === 'error').length;
+  showToast(errors ? `DONE — ${done-errors} OK · ${errors} ERRORS → ZIP` : `✓ ${done} FILES → ZIP DOWNLOADED`);
+}
+
+// ============================================================
+// EXTRACTION  →  individual downloads from zip
+// ============================================================
+async function startExtraction() {
+  if (busy || !fileItems.length || !zipFile) return;
+  busy = true;
+  document.getElementById('action-btn').disabled = true;
+  document.getElementById('clear-btn').disabled  = true;
+
+  const total = fileItems.length;
+  let done    = 0;
+  fileItems.forEach((it, i) => { it.status = 'pending'; setRowStatus(i, 'pending'); });
+  showProgress(0, total);
+
+  const buf      = await zipFile.arrayBuffer();
+  const entries  = parseZip(buf);
+  const entryMap = {};
+  entries.forEach(e => { entryMap[e.name] = e; });
+
+  for (let i = 0; i < fileItems.length; i++) {
+    const item = fileItems[i];
+    setRowStatus(i, 'converting');
+    try {
+      const entry = entryMap[item.fullPath];
+      if (!entry) throw new Error('Entry missing');
+      const data  = await extractEntry(buf, entry);
+      const mime  = mimeForName(item.name);
+      downloadBlob(new Blob([data], {type:mime}), item.name);
+      item.status = 'done'; setRowStatus(i, 'done');
+      await sleep(80);
+    } catch(err) {
+      item.status = 'error'; setRowStatus(i, 'error'); console.error(item.name, err);
+    }
+    done++; showProgress(done, total); await sleep(10);
+  }
+
+  busy = false;
+  document.getElementById('clear-btn').disabled = false;
+  const errors = fileItems.filter(f => f.status === 'error').length;
+  showToast(errors ? `DONE — ${done-errors} OK · ${errors} ERRORS` : `✓ ${done} FILES EXTRACTED`);
+}
+
+// ============================================================
+// IMAGE CONVERSION (canvas)
+// ============================================================
+function convertImage(file, canvas, ctx, targetMime, qual) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      canvas.width = img.naturalWidth; canvas.height = img.naturalHeight;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      if (targetMime === 'image/jpeg') { ctx.fillStyle='#fff'; ctx.fillRect(0,0,canvas.width,canvas.height); }
+      ctx.drawImage(img, 0, 0);
+      canvas.toBlob(
+        blob => { if (!blob) { reject(new Error('toBlob null')); return; } resolve(blob); },
+        targetMime,
+        targetMime === 'image/png' ? undefined : qual/100
+      );
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Load failed')); };
+    img.src = url;
+  });
+}
+
+function newFilename(original, mime) {
+  return original.replace(/\.(png|jpe?g|webp)$/i, '') + '.' + EXT[mime];
+}
+
+function mimeForName(name) {
+  const n = name.toLowerCase();
+  if (n.endsWith('.png'))                       return 'image/png';
+  if (n.endsWith('.jpg')||n.endsWith('.jpeg'))  return 'image/jpeg';
+  if (n.endsWith('.webp'))                      return 'image/webp';
+  return 'application/octet-stream';
+}
+
+// ============================================================
+// ZIP WRITER — pure JS, no libraries, method 0 (store)
+// Images are already compressed so "store" wastes nothing
+// and avoids implementing DEFLATE from scratch.
+// ============================================================
+function buildZip(files) {
+  // files: Array<{ name:string, data:Uint8Array }>
+  const enc      = new TextEncoder();
+  const localParts  = [];
+  const centralParts = [];
+  let offset = 0;
+
+  for (const f of files) {
+    const nameBytes = enc.encode(f.name);
+    const data      = f.data;
+    const crc       = crc32(data);
+    const sz        = data.length;
+
+    // Local file header (30 bytes + name)
+    const lh = new Uint8Array(30 + nameBytes.length);
+    const lv = new DataView(lh.buffer);
+    lv.setUint32(0,  0x04034b50, true); // PK\x03\x04
+    lv.setUint16(4,  20, true);          // version needed: 2.0
+    lv.setUint16(6,  0,  true);          // general purpose flags
+    lv.setUint16(8,  0,  true);          // compression: 0 = store
+    lv.setUint16(10, 0,  true);          // mod time
+    lv.setUint16(12, 0,  true);          // mod date
+    lv.setUint32(14, crc, true);
+    lv.setUint32(18, sz,  true);         // compressed size
+    lv.setUint32(22, sz,  true);         // uncompressed size
+    lv.setUint16(26, nameBytes.length, true);
+    lv.setUint16(28, 0, true);           // extra field length
+    lh.set(nameBytes, 30);
+
+    localParts.push(lh, data);
+
+    // Central directory header (46 bytes + name)
+    const ch = new Uint8Array(46 + nameBytes.length);
+    const cv = new DataView(ch.buffer);
+    cv.setUint32(0,  0x02014b50, true); // PK\x01\x02
+    cv.setUint16(4,  20, true);
+    cv.setUint16(6,  20, true);
+    cv.setUint16(8,  0,  true);
+    cv.setUint16(10, 0,  true);          // method: store
+    cv.setUint16(12, 0,  true);
+    cv.setUint16(14, 0,  true);
+    cv.setUint32(16, crc, true);
+    cv.setUint32(20, sz,  true);
+    cv.setUint32(24, sz,  true);
+    cv.setUint16(28, nameBytes.length, true);
+    cv.setUint16(30, 0, true);
+    cv.setUint16(32, 0, true);
+    cv.setUint16(34, 0, true);
+    cv.setUint16(36, 0, true);
+    cv.setUint32(38, 0, true);
+    cv.setUint32(42, offset, true);      // offset of local header
+    ch.set(nameBytes, 46);
+    centralParts.push(ch);
+
+    offset += lh.length + data.length;
+  }
+
+  const cdOffset = offset;
+  const cdSize   = centralParts.reduce((s,p) => s + p.length, 0);
+
+  // End of central directory (22 bytes)
+  const eocd = new Uint8Array(22);
+  const ev   = new DataView(eocd.buffer);
+  ev.setUint32(0,  0x06054b50, true); // PK\x05\x06
+  ev.setUint16(4,  0, true);
+  ev.setUint16(6,  0, true);
+  ev.setUint16(8,  files.length, true);
+  ev.setUint16(10, files.length, true);
+  ev.setUint32(12, cdSize,   true);
+  ev.setUint32(16, cdOffset, true);
+  ev.setUint16(20, 0, true);
+
+  // Concatenate everything into one Uint8Array
+  const all   = [...localParts, ...centralParts, eocd];
+  const total = all.reduce((s,p) => s + p.length, 0);
+  const out   = new Uint8Array(total);
+  let pos = 0;
+  for (const p of all) { out.set(p, pos); pos += p.length; }
+  return out;
+}
+
+// CRC-32 (standard ZIP integrity check)
+const CRC_TABLE = (() => {
+  const t = new Uint32Array(256);
+  for (let i = 0; i < 256; i++) {
+    let c = i;
+    for (let j = 0; j < 8; j++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+    t[i] = c;
+  }
+  return t;
+})();
+
+function crc32(data) {
+  let crc = 0xFFFFFFFF;
+  for (let i = 0; i < data.length; i++) crc = (crc >>> 8) ^ CRC_TABLE[(crc ^ data[i]) & 0xFF];
+  return (crc ^ 0xFFFFFFFF) >>> 0;
+}
+
+// ============================================================
+// ZIP READER — pure JS parser + extraction
+// Supports: method 0 (store) and method 8 (deflate)
+// Deflate uses the browser's built-in DecompressionStream
+// (Chrome 80+, Firefox 113+, Safari 16.4+)
+// ============================================================
+function parseZip(buffer) {
+  const view  = new DataView(buffer);
+  const bytes = new Uint8Array(buffer);
+  // Find End Of Central Directory by scanning backwards
+  let eocdOff = -1;
+  for (let i = buffer.byteLength - 22; i >= 0; i--) {
+    if (view.getUint32(i, true) === 0x06054b50) { eocdOff = i; break; }
+  }
+  if (eocdOff < 0) throw new Error('Not a valid ZIP file');
+
+  const cdOffset = view.getUint32(eocdOff + 16, true);
+  const cdCount  = view.getUint16(eocdOff + 8,  true);
+  const entries  = [];
+  let pos        = cdOffset;
+
+  for (let i = 0; i < cdCount; i++) {
+    if (view.getUint32(pos, true) !== 0x02014b50) break;
+    const method           = view.getUint16(pos + 10, true);
+    const crc              = view.getUint32(pos + 16, true);
+    const compressedSize   = view.getUint32(pos + 20, true);
+    const uncompressedSize = view.getUint32(pos + 24, true);
+    const nameLen          = view.getUint16(pos + 28, true);
+    const extraLen         = view.getUint16(pos + 30, true);
+    const commentLen       = view.getUint16(pos + 32, true);
+    const localOffset      = view.getUint32(pos + 42, true);
+    const name             = new TextDecoder().decode(bytes.slice(pos + 46, pos + 46 + nameLen));
+    entries.push({ name, method, crc, compressedSize, uncompressedSize, localOffset, isDir: name.endsWith('/') });
+    pos += 46 + nameLen + extraLen + commentLen;
+  }
+  return entries;
+}
+
+async function extractEntry(buffer, entry) {
+  const view    = new DataView(buffer);
+  const bytes   = new Uint8Array(buffer);
+  const lo      = entry.localOffset;
+  if (view.getUint32(lo, true) !== 0x04034b50) throw new Error('Bad local header');
+  const nameLen  = view.getUint16(lo + 26, true);
+  const extraLen = view.getUint16(lo + 28, true);
+  const dataStart = lo + 30 + nameLen + extraLen;
+  const compData  = bytes.slice(dataStart, dataStart + entry.compressedSize);
+
+  if (entry.method === 0) {
+    // Store — data is uncompressed
+    return compData;
+  } else if (entry.method === 8) {
+    // Deflate — use browser's built-in DecompressionStream (no library needed)
+    const ds     = new DecompressionStream('deflate-raw');
+    const writer = ds.writable.getWriter();
+    const reader = ds.readable.getReader();
+    writer.write(compData);
+    writer.close();
+    const chunks = [];
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      chunks.push(value);
+    }
+    const total  = chunks.reduce((s, c) => s + c.length, 0);
+    const result = new Uint8Array(total);
+    let rpos = 0;
+    for (const c of chunks) { result.set(c, rpos); rpos += c.length; }
+    return result;
+  } else {
+    throw new Error('Unsupported compression method: ' + entry.method + '. Only Store and Deflate are supported.');
+  }
+}
+
+// ============================================================
+// DOWNLOAD
+// ============================================================
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a   = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 500);
+}
+
+// ============================================================
+// PROGRESS
+// ============================================================
+function showProgress(done, total) {
+  document.getElementById('progress-bar-wrap').classList.add('show');
+  document.getElementById('progress-fill').style.width = (total ? done/total*100 : 0) + '%';
+  document.getElementById('progress-label').textContent = done + ' / ' + total;
+}
+function setProgressLabel(text) {
+  document.getElementById('progress-label').textContent = text;
+}
+function hideProgress() {
+  document.getElementById('progress-bar-wrap').classList.remove('show');
+  document.getElementById('progress-fill').style.width = '0%';
+}
+
+// ============================================================
+// CLEAR
+// ============================================================
+function clearAll() {
+  fileItems = []; folderName = ''; zipFile = null; busy = false;
+  const isConvert = mode === 'convert';
+  const zoneId    = isConvert ? 'convert-drop' : 'unzip-drop';
+  const titleId   = isConvert ? 'convert-drop-title' : 'unzip-drop-title';
+  document.getElementById(zoneId).classList.remove('loaded','drag-over');
+  document.getElementById(titleId).textContent = isConvert ? 'DROP FOLDER HERE' : 'DROP ZIP HERE';
+  document.getElementById('info-strip').classList.remove('show');
+  document.getElementById('action-btn').disabled = true;
+  document.getElementById('clear-btn').disabled  = true;
+  renderFileList();
+  hideProgress();
+}
+
+// ============================================================
+// UTILS
+// ============================================================
+function fmtSize(bytes) {
+  if (!bytes) return '—';
+  if (bytes < 1024)    return bytes + ' B';
+  if (bytes < 1048576) return (bytes/1024).toFixed(1) + ' KB';
+  return (bytes/1048576).toFixed(1) + ' MB';
+}
+function escHtml(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+}
+</script>
+</body>
+</html>

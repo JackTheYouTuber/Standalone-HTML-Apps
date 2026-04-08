@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PALETTE_LAB // v1.0</title>
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-void:#030008;--bg-base:#0a0514;--bg-panel:#0f0a1e;--bg-card:#150d28;
+  --bg-header:#09061a;--bg-nav:#07041a;--bg-input:#0c0820;
+  --accent-primary:#00ffcc;--accent-secondary:#ff4dd2;--accent-tertiary:#ffe600;--accent-dim:#006655;
+  --text-body:#c0b8d4;--text-muted:#6a607a;
+  --font-display:'VT323','Courier New',monospace;--font-body:'Share Tech Mono','Lucida Console',monospace;
+  --gap-sm:8px;--gap-md:16px;--gap-lg:24px;
+  --glow-mint:0 0 6px #00ffcc88,0 0 14px #00ffcc44;
+  --glow-pink:0 0 6px #ff4dd288,0 0 14px #ff4dd244;
+  --glow-text:0 0 8px #00ffcccc;
+  --border-bright:1px solid #00ffcc;--border-dim:1px solid #006655;--border-pink:1px solid #ff4dd2;
+  --transition:0.15s ease;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;}
+body{
+  background:var(--bg-base);color:var(--text-body);font-family:var(--font-body);
+  font-size:13px;line-height:1.5;display:flex;flex-direction:column;
+  background-image:
+    radial-gradient(circle at 50% 0%,#1a0040 0%,transparent 55%),
+    repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,255,204,.012) 3px,rgba(0,255,204,.012) 4px),
+    repeating-linear-gradient(90deg,transparent,transparent 3px,rgba(0,255,204,.012) 3px,rgba(0,255,204,.012) 4px);
+}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;
+  background:repeating-linear-gradient(to bottom,transparent 0,transparent 2px,rgba(0,0,0,.07) 2px,rgba(0,0,0,.07) 4px);}
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:var(--bg-void);}
+::-webkit-scrollbar-thumb{background:var(--accent-dim);}
+::-webkit-scrollbar-thumb:hover{background:var(--accent-primary);}
+.blink{animation:blink 1s step-end infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+
+/* HEADER */
+#header{
+  flex-shrink:0;background:var(--bg-header);
+  background-image:
+    repeating-linear-gradient(135deg,transparent 0,transparent 20px,rgba(0,255,204,.025) 20px,rgba(0,255,204,.025) 21px),
+    radial-gradient(ellipse at 25% 50%,#1a003a 0%,transparent 65%),
+    radial-gradient(ellipse at 75% 50%,#003322 0%,transparent 60%);
+  border-bottom:2px solid var(--accent-primary);
+  padding:10px var(--gap-lg);display:flex;align-items:center;justify-content:space-between;
+  position:relative;overflow:hidden;
+}
+#header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;
+  background:linear-gradient(to right,transparent,var(--accent-primary),var(--accent-secondary),var(--accent-primary),transparent);
+  box-shadow:var(--glow-mint);}
+.header-brand h1{font-family:var(--font-display);font-size:2rem;color:var(--accent-primary);text-shadow:var(--glow-text);letter-spacing:4px;line-height:1;}
+.header-brand p{font-size:.65rem;color:var(--accent-secondary);letter-spacing:3px;margin-top:2px;text-transform:uppercase;}
+.header-actions{display:flex;gap:var(--gap-sm);align-items:center;flex-wrap:wrap;}
+
+/* MAIN LAYOUT */
+#main{flex:1;display:flex;overflow:hidden;}
+
+/* LEFT: PALETTE LIST */
+#palette-list-panel{
+  width:220px;min-width:220px;background:var(--bg-panel);border-right:var(--border-bright);
+  display:flex;flex-direction:column;overflow:hidden;
+}
+.panel-header{padding:var(--gap-sm) var(--gap-md);border-bottom:var(--border-dim);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.panel-title{font-family:var(--font-display);font-size:.95rem;color:var(--accent-secondary);letter-spacing:2px;}
+#saved-palettes{flex:1;overflow-y:auto;padding:4px 0;}
+.saved-pal-item{
+  padding:8px var(--gap-md);cursor:pointer;border-bottom:1px solid rgba(0,255,204,.05);
+  transition:background var(--transition);border-left:2px solid transparent;
+}
+.saved-pal-item:hover{background:var(--bg-card);}
+.saved-pal-item.active{background:var(--bg-card);border-left-color:var(--accent-primary);}
+.spi-name{font-size:.8rem;color:var(--text-body);margin-bottom:4px;}
+.saved-pal-item.active .spi-name{color:var(--accent-primary);}
+.spi-swatches{display:flex;gap:2px;}
+.spi-swatch{width:14px;height:14px;border:1px solid rgba(0,255,204,.15);}
+.spi-meta{font-size:.62rem;color:var(--text-muted);margin-top:3px;}
+.palette-empty{padding:var(--gap-lg);text-align:center;color:var(--text-muted);font-size:.75rem;letter-spacing:1px;line-height:1.8;}
+
+/* CENTER: EDITOR */
+#editor-panel{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+
+/* GEN BAR */
+#gen-bar{
+  flex-shrink:0;background:var(--bg-nav);border-bottom:var(--border-dim);
+  padding:6px var(--gap-md);display:flex;align-items:center;gap:var(--gap-sm);flex-wrap:wrap;
+}
+.gen-label{font-size:.7rem;color:var(--text-muted);letter-spacing:1px;}
+.gen-btn{
+  background:var(--bg-card);border:var(--border-dim);color:var(--text-body);
+  font-family:var(--font-display);font-size:.85rem;padding:3px 9px;cursor:pointer;
+  transition:all var(--transition);letter-spacing:.5px;white-space:nowrap;
+}
+.gen-btn:hover{border-color:var(--accent-primary);color:var(--accent-primary);box-shadow:var(--glow-mint);}
+.gen-sep{width:1px;height:20px;background:var(--accent-dim);flex-shrink:0;}
+
+/* PALETTE NAME */
+#pal-name-input{
+  background:transparent;border:none;border-bottom:1px solid var(--accent-dim);
+  color:var(--accent-primary);font-family:var(--font-display);font-size:1.3rem;
+  letter-spacing:2px;outline:none;padding:2px 0;width:200px;
+  transition:border-color var(--transition);
+}
+#pal-name-input:focus{border-bottom-color:var(--accent-primary);}
+
+/* SWATCH STRIP */
+#swatch-strip{
+  flex-shrink:0;height:80px;display:flex;border-bottom:var(--border-bright);
+  background:var(--bg-void);
+}
+.strip-swatch{
+  flex:1;cursor:pointer;position:relative;transition:flex var(--transition);
+  border-right:1px solid rgba(0,0,0,.3);
+}
+.strip-swatch:last-child{border-right:none;}
+.strip-swatch:hover{flex:1.5;}
+.strip-swatch .ss-hex{
+  position:absolute;bottom:4px;left:50%;transform:translateX(-50%);
+  font-family:var(--font-display);font-size:.75rem;color:rgba(255,255,255,.7);
+  letter-spacing:1px;white-space:nowrap;text-shadow:0 1px 3px rgba(0,0,0,.8);
+  pointer-events:none;
+}
+
+/* EDITOR GRID */
+#color-editor{flex:1;display:flex;overflow:hidden;}
+
+/* COLOR SLOTS */
+#slots-area{flex:1;overflow-y:auto;padding:var(--gap-md);display:flex;flex-direction:column;gap:var(--gap-md);}
+.slot-row{
+  background:var(--bg-card);border:var(--border-dim);padding:var(--gap-md);
+  display:flex;align-items:center;gap:var(--gap-md);
+  transition:border-color var(--transition),box-shadow var(--transition);
+  cursor:pointer;
+}
+.slot-row:hover{border-color:var(--accent-primary);}
+.slot-row.active-slot{border-color:var(--accent-primary);box-shadow:var(--glow-mint);}
+.slot-color-box{
+  width:60px;height:60px;border:2px solid var(--accent-dim);flex-shrink:0;
+  cursor:pointer;transition:border-color var(--transition);
+}
+.slot-color-box:hover{border-color:var(--accent-primary);}
+.slot-info{flex:1;}
+.slot-hex{font-family:var(--font-display);font-size:1.1rem;color:var(--accent-primary);letter-spacing:2px;margin-bottom:4px;}
+.slot-rgb{font-size:.7rem;color:var(--text-muted);letter-spacing:1px;}
+.slot-hsl{font-size:.7rem;color:var(--text-muted);letter-spacing:1px;}
+.slot-name{font-size:.72rem;color:var(--accent-secondary);letter-spacing:1px;margin-top:2px;}
+.slot-actions{display:flex;gap:4px;}
+
+/* RIGHT: COLOR PICKER */
+#picker-panel{
+  width:260px;min-width:260px;background:var(--bg-panel);border-left:var(--border-bright);
+  display:flex;flex-direction:column;overflow-y:auto;
+}
+.pp-section{padding:var(--gap-sm) var(--gap-md);border-bottom:var(--border-dim);}
+.pp-title{font-family:var(--font-display);font-size:.9rem;color:var(--accent-secondary);letter-spacing:2px;margin-bottom:var(--gap-sm);}
+
+/* HUE/SAT/LIG sliders */
+.hsl-row{display:flex;align-items:center;gap:6px;margin-bottom:6px;font-size:.7rem;color:var(--text-muted);}
+.hsl-label{width:14px;flex-shrink:0;color:var(--accent-primary);font-family:var(--font-display);font-size:.85rem;}
+.hsl-slider{
+  flex:1;-webkit-appearance:none;height:10px;outline:none;cursor:pointer;border-radius:0;
+  border:var(--border-dim);
+}
+.hsl-slider::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:20px;background:var(--accent-primary);box-shadow:var(--glow-mint);cursor:pointer;border-radius:0;}
+.hsl-val{width:32px;text-align:right;color:var(--accent-primary);}
+#hue-slider{background:linear-gradient(to right,#ff0000,#ffff00,#00ff00,#00ffff,#0000ff,#ff00ff,#ff0000);}
+
+/* Big color preview */
+#big-preview{width:100%;height:100px;border:var(--border-bright);margin-bottom:var(--gap-sm);box-shadow:var(--glow-mint);}
+
+/* Hex input */
+.hex-row{display:flex;gap:4px;align-items:center;margin-bottom:var(--gap-sm);}
+#hex-edit{
+  flex:1;background:var(--bg-input);border:var(--border-dim);color:var(--accent-primary);
+  font-family:var(--font-body);font-size:.85rem;padding:5px 8px;outline:none;
+  letter-spacing:2px;transition:border-color var(--transition);
+}
+#hex-edit:focus{border-color:var(--accent-primary);}
+#native-picker{opacity:0;width:0;height:0;position:absolute;}
+
+/* HARMONIES */
+#harmonies-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.harmony-box{
+  background:var(--bg-card);border:var(--border-dim);padding:var(--gap-sm);
+  cursor:pointer;transition:all var(--transition);text-align:center;
+}
+.harmony-box:hover{border-color:var(--accent-primary);box-shadow:var(--glow-mint);}
+.harmony-swatches{display:flex;gap:2px;justify-content:center;margin-bottom:4px;}
+.h-swatch{width:16px;height:16px;border:1px solid rgba(0,255,204,.2);}
+.harmony-name{font-size:.65rem;color:var(--text-muted);letter-spacing:1px;}
+
+/* CONTRAST CHECKER */
+#contrast-display{
+  background:var(--bg-card);border:var(--border-dim);padding:var(--gap-sm);
+  font-size:.75rem;line-height:1.6;
+}
+.contrast-row{display:flex;justify-content:space-between;align-items:center;}
+.contrast-sample{font-family:var(--font-display);font-size:1rem;letter-spacing:1px;}
+.contrast-ratio{color:var(--accent-primary);}
+.contrast-grade{padding:1px 6px;font-size:.65rem;border:1px solid;}
+.grade-aaa{color:#00ff88;border-color:#00ff88;}
+.grade-aa{color:var(--accent-primary);border-color:var(--accent-primary);}
+.grade-fail{color:#ff4444;border-color:#ff4444;}
+
+/* EXPORT BOX */
+#export-box{padding:var(--gap-sm);background:var(--bg-input);border:var(--border-dim);font-size:.7rem;color:var(--accent-primary);font-family:var(--font-body);white-space:pre-wrap;word-break:break-all;max-height:120px;overflow-y:auto;letter-spacing:.5px;line-height:1.7;}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:4px;background:transparent;border:var(--border-bright);color:var(--accent-primary);padding:5px 12px;font-family:var(--font-display);font-size:.95rem;letter-spacing:1px;cursor:pointer;transition:background var(--transition),box-shadow var(--transition);}
+.btn:hover{background:var(--accent-primary);color:var(--bg-void);box-shadow:var(--glow-mint);}
+.btn-pink{border-color:var(--accent-secondary);color:var(--accent-secondary);}
+.btn-pink:hover{background:var(--accent-secondary);color:var(--bg-void);box-shadow:var(--glow-pink);}
+.btn-sm{padding:2px 8px;font-size:.8rem;}
+.btn-danger{border-color:#ff3333;color:#ff3333;}
+.btn-danger:hover{background:#ff3333;color:#fff;}
+.btn-yellow{border-color:var(--accent-tertiary);color:var(--accent-tertiary);}
+.btn-yellow:hover{background:var(--accent-tertiary);color:var(--bg-void);}
+
+/* TOAST */
+#toast{position:fixed;bottom:20px;right:20px;background:var(--bg-card);border:var(--border-bright);box-shadow:var(--glow-mint);color:var(--accent-primary);font-family:var(--font-display);font-size:1rem;letter-spacing:1px;padding:8px 16px;z-index:9000;opacity:0;transform:translateY(8px);transition:opacity .2s,transform .2s;pointer-events:none;}
+#toast.show{opacity:1;transform:translateY(0);}
+</style>
+</head>
+<body>
+
+<div id="header">
+  <div class="header-brand">
+    <h1>PALETTE_LAB<span class="blink">_</span></h1>
+    <p>// retro color palette studio // v1.0</p>
+  </div>
+  <div class="header-actions">
+    <button class="btn btn-sm" onclick="newPalette()">+ NEW</button>
+    <button class="btn btn-sm" onclick="savePalette()">💾 SAVE</button>
+    <button class="btn btn-sm btn-yellow" onclick="exportCSS()">⬇ CSS VARS</button>
+    <button class="btn btn-sm btn-yellow" onclick="exportHexList()">⬇ HEX LIST</button>
+    <button class="btn btn-sm btn-pink" onclick="exportSwatch()">⬇ PNG SWATCH</button>
+  </div>
+</div>
+
+<div id="main">
+
+  <!-- SAVED PALETTES -->
+  <div id="palette-list-panel">
+    <div class="panel-header">
+      <span class="panel-title">// SAVED</span>
+      <button class="btn btn-sm" onclick="newPalette()">+</button>
+    </div>
+    <div id="saved-palettes"></div>
+  </div>
+
+  <!-- EDITOR -->
+  <div id="editor-panel">
+    <!-- GEN BAR -->
+    <div id="gen-bar">
+      <input type="text" id="pal-name-input" value="MY_PALETTE" placeholder="PALETTE NAME">
+      <div class="gen-sep"></div>
+      <span class="gen-label">GENERATE:</span>
+      <button class="gen-btn" onclick="generate('analogous')">ANALOGOUS</button>
+      <button class="gen-btn" onclick="generate('complementary')">COMPLEMENT</button>
+      <button class="gen-btn" onclick="generate('triadic')">TRIADIC</button>
+      <button class="gen-btn" onclick="generate('split')">SPLIT-COMP</button>
+      <button class="gen-btn" onclick="generate('tetradic')">TETRADIC</button>
+      <button class="gen-btn" onclick="generate('monochromatic')">MONO</button>
+      <button class="gen-btn" onclick="generate('random')">RANDOM</button>
+      <div class="gen-sep"></div>
+      <button class="gen-btn" onclick="addColor()">+ SLOT</button>
+    </div>
+
+    <!-- STRIP -->
+    <div id="swatch-strip"></div>
+
+    <!-- SLOTS + PICKER -->
+    <div id="color-editor">
+      <div id="slots-area"></div>
+      <div id="picker-panel">
+
+        <!-- BIG PREVIEW -->
+        <div class="pp-section">
+          <div class="pp-title">// ACTIVE COLOR</div>
+          <canvas id="big-preview" width="240" height="100"></canvas>
+          <div class="hex-row">
+            <input type="text" id="hex-edit" value="#00ffcc" maxlength="7" oninput="onHexEdit(this.value)">
+            <button class="btn btn-sm" onclick="document.getElementById('native-picker').click()">⬛</button>
+            <input type="color" id="native-picker" oninput="onNativeChange(this.value)">
+          </div>
+        </div>
+
+        <!-- HSL SLIDERS -->
+        <div class="pp-section">
+          <div class="pp-title">// HSL</div>
+          <div class="hsl-row">
+            <span class="hsl-label">H</span>
+            <input type="range" class="hsl-slider" id="h-slider" min="0" max="360" value="165" oninput="onHslChange()">
+            <span class="hsl-val" id="h-val">165°</span>
+          </div>
+          <div class="hsl-row">
+            <span class="hsl-label">S</span>
+            <input type="range" class="hsl-slider" id="s-slider" min="0" max="100" value="100" oninput="onHslChange()" id="s-slider">
+            <span class="hsl-val" id="s-val">100%</span>
+          </div>
+          <div class="hsl-row">
+            <span class="hsl-label">L</span>
+            <input type="range" class="hsl-slider" id="l-slider" min="0" max="100" value="50" oninput="onHslChange()">
+            <span class="hsl-val" id="l-val">50%</span>
+          </div>
+        </div>
+
+        <!-- HARMONIES -->
+        <div class="pp-section">
+          <div class="pp-title">// HARMONIES</div>
+          <div id="harmonies-grid"></div>
+        </div>
+
+        <!-- CONTRAST -->
+        <div class="pp-section">
+          <div class="pp-title">// CONTRAST CHECK</div>
+          <div id="contrast-display"></div>
+        </div>
+
+        <!-- EXPORT PREVIEW -->
+        <div class="pp-section">
+          <div class="pp-title" style="margin-bottom:4px;">// EXPORT PREVIEW</div>
+          <div id="export-box"></div>
+          <div style="display:flex;gap:4px;margin-top:6px;flex-wrap:wrap;">
+            <button class="btn btn-sm" onclick="exportCSS()">CSS</button>
+            <button class="btn btn-sm" onclick="exportHexList()">HEX</button>
+            <button class="btn btn-sm" onclick="exportJSON()">JSON</button>
+            <button class="btn btn-sm btn-pink" onclick="copyExport()">📋 COPY</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ============================================================
+// STATE
+// ============================================================
+let savedPalettes = JSON.parse(localStorage.getItem('pl_palettes') || '[]');
+let currentPalId  = null;
+let activeSlotIdx = 0;
+let currentPalette = { name:'MY_PALETTE', colors:['#00ffcc','#ff4dd2','#ffe600','#0a0514','#c0b8d4'] };
+let exportMode = 'css';
+
+// ============================================================
+// INIT
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => {
+  renderSavedList();
+  renderEditor();
+  selectSlot(0);
+});
+
+// ============================================================
+// SAVED LIST
+// ============================================================
+function renderSavedList() {
+  const el = document.getElementById('saved-palettes');
+  if (!savedPalettes.length) {
+    el.innerHTML = `<div class="palette-empty">NO SAVED PALETTES.<br>CREATE AND SAVE ONE!</div>`;
+    return;
+  }
+  el.innerHTML = savedPalettes.map(p => `
+    <div class="saved-pal-item ${p.id===currentPalId?'active':''}" onclick="loadSaved('${p.id}')">
+      <div class="spi-name">${escHtml(p.name)}</div>
+      <div class="spi-swatches">${p.colors.slice(0,8).map(c=>`<div class="spi-swatch" style="background:${c};"></div>`).join('')}</div>
+      <div class="spi-meta">${p.colors.length} colors · ${fmtDate(p.savedAt)}</div>
+    </div>
+  `).join('');
+}
+
+function loadSaved(id) {
+  const p = savedPalettes.find(x=>x.id===id);
+  if (!p) return;
+  currentPalId = id;
+  currentPalette = { name:p.name, colors:[...p.colors] };
+  document.getElementById('pal-name-input').value = p.name;
+  renderEditor();
+  selectSlot(0);
+  renderSavedList();
+  showToast('PALETTE LOADED');
+}
+
+function savePalette() {
+  const name = document.getElementById('pal-name-input').value.trim() || 'UNNAMED';
+  currentPalette.name = name;
+  if (currentPalId) {
+    const idx = savedPalettes.findIndex(p=>p.id===currentPalId);
+    if (idx>=0) { savedPalettes[idx]={...savedPalettes[idx],name,colors:[...currentPalette.colors],savedAt:Date.now()}; }
+    else { savedPalettes.unshift({id:currentPalId,name,colors:[...currentPalette.colors],savedAt:Date.now()}); }
+  } else {
+    currentPalId = 'p_'+Date.now();
+    savedPalettes.unshift({id:currentPalId,name,colors:[...currentPalette.colors],savedAt:Date.now()});
+  }
+  localStorage.setItem('pl_palettes',JSON.stringify(savedPalettes));
+  renderSavedList();
+  showToast('PALETTE SAVED ✓');
+}
+
+function newPalette() {
+  currentPalId = null;
+  currentPalette = { name:'NEW_PALETTE', colors:['#00ffcc','#ff4dd2','#ffe600','#0a0514','#c0b8d4'] };
+  document.getElementById('pal-name-input').value = 'NEW_PALETTE';
+  renderEditor();
+  selectSlot(0);
+  renderSavedList();
+}
+
+// ============================================================
+// EDITOR RENDER
+// ============================================================
+function renderEditor() {
+  renderStrip();
+  renderSlots();
+  updateExportPreview();
+}
+
+function renderStrip() {
+  const strip = document.getElementById('swatch-strip');
+  strip.innerHTML = currentPalette.colors.map((c,i) => `
+    <div class="strip-swatch ${i===activeSlotIdx?'active-strip':''}" style="background:${c};" onclick="selectSlot(${i})" title="${c}">
+      <span class="ss-hex">${c}</span>
+    </div>
+  `).join('');
+}
+
+function renderSlots() {
+  const area = document.getElementById('slots-area');
+  area.innerHTML = currentPalette.colors.map((c,i) => {
+    const {r,g,b}=hexToRgb(c);
+    const {h,s,l}=rgbToHsl(r,g,b);
+    const name = colorName(h,s,l);
+    return `<div class="slot-row ${i===activeSlotIdx?'active-slot':''}" onclick="selectSlot(${i})">
+      <div class="slot-color-box" style="background:${c};" onclick="selectSlot(${i})"></div>
+      <div class="slot-info">
+        <div class="slot-hex">${c.toUpperCase()}</div>
+        <div class="slot-rgb">RGB(${r}, ${g}, ${b})</div>
+        <div class="slot-hsl">HSL(${h}°, ${s}%, ${l}%)</div>
+        <div class="slot-name">${name}</div>
+      </div>
+      <div class="slot-actions">
+        <button class="btn btn-sm" onclick="duplicateSlot(${i});event.stopPropagation();" title="Duplicate">⊕</button>
+        <button class="btn btn-sm" onclick="moveSlot(${i},-1);event.stopPropagation();" title="Move left">◀</button>
+        <button class="btn btn-sm" onclick="moveSlot(${i},1);event.stopPropagation();" title="Move right">▶</button>
+        <button class="btn btn-sm btn-danger" onclick="removeSlot(${i});event.stopPropagation();" title="Remove">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function selectSlot(i) {
+  activeSlotIdx = i;
+  const c = currentPalette.colors[i];
+  updatePickerFromHex(c);
+  renderEditor();
+}
+
+// ============================================================
+// SLOT OPERATIONS
+// ============================================================
+function addColor() {
+  currentPalette.colors.push('#888888');
+  activeSlotIdx = currentPalette.colors.length - 1;
+  renderEditor();
+  selectSlot(activeSlotIdx);
+}
+
+function removeSlot(i) {
+  if (currentPalette.colors.length <= 1) { showToast('NEED AT LEAST 1 COLOR'); return; }
+  currentPalette.colors.splice(i,1);
+  if (activeSlotIdx >= currentPalette.colors.length) activeSlotIdx = currentPalette.colors.length-1;
+  renderEditor();
+}
+
+function duplicateSlot(i) {
+  currentPalette.colors.splice(i+1, 0, currentPalette.colors[i]);
+  renderEditor();
+}
+
+function moveSlot(i, dir) {
+  const j = i+dir;
+  if (j<0||j>=currentPalette.colors.length) return;
+  [currentPalette.colors[i],currentPalette.colors[j]]=[currentPalette.colors[j],currentPalette.colors[i]];
+  if (activeSlotIdx===i) activeSlotIdx=j;
+  renderEditor();
+}
+
+function setActiveColor(hex) {
+  currentPalette.colors[activeSlotIdx] = hex;
+  renderEditor();
+  updateHarmonies();
+  updateContrast();
+  updateExportPreview();
+  updateBigPreview(hex);
+}
+
+// ============================================================
+// PICKER
+// ============================================================
+function updatePickerFromHex(hex) {
+  document.getElementById('hex-edit').value = hex;
+  document.getElementById('native-picker').value = hex;
+  const {r,g,b} = hexToRgb(hex);
+  const {h,s,l} = rgbToHsl(r,g,b);
+  document.getElementById('h-slider').value = h;
+  document.getElementById('s-slider').value = s;
+  document.getElementById('l-slider').value = l;
+  document.getElementById('h-val').textContent = h+'°';
+  document.getElementById('s-val').textContent = s+'%';
+  document.getElementById('l-val').textContent = l+'%';
+  updateSSlider(h,l);
+  updateLSlider(h,s);
+  updateBigPreview(hex);
+  updateHarmonies();
+  updateContrast();
+  updateExportPreview();
+}
+
+function updateSSlider(h,l) {
+  const sl = document.getElementById('s-slider');
+  sl.style.background = `linear-gradient(to right, hsl(${h},0%,${l}%), hsl(${h},100%,${l}%))`;
+}
+function updateLSlider(h,s) {
+  const ll = document.getElementById('l-slider');
+  ll.style.background = `linear-gradient(to right, hsl(${h},${s}%,0%), hsl(${h},${s}%,50%), hsl(${h},${s}%,100%))`;
+}
+
+function onHslChange() {
+  const h=parseInt(document.getElementById('h-slider').value);
+  const s=parseInt(document.getElementById('s-slider').value);
+  const l=parseInt(document.getElementById('l-slider').value);
+  document.getElementById('h-val').textContent=h+'°';
+  document.getElementById('s-val').textContent=s+'%';
+  document.getElementById('l-val').textContent=l+'%';
+  updateSSlider(h,l); updateLSlider(h,s);
+  const hex=hslToHex(h,s,l);
+  document.getElementById('hex-edit').value=hex;
+  document.getElementById('native-picker').value=hex;
+  setActiveColor(hex);
+  updateBigPreview(hex);
+}
+
+function onHexEdit(val) {
+  if(/^#[0-9a-fA-F]{6}$/.test(val)) { setActiveColor(val); updatePickerFromHex(val); }
+}
+function onNativeChange(val) { setActiveColor(val); updatePickerFromHex(val); }
+
+function updateBigPreview(hex) {
+  const c = document.getElementById('big-preview');
+  const cx = c.getContext('2d');
+  cx.fillStyle=hex; cx.fillRect(0,0,c.width,c.height);
+  const {r,g,b}=hexToRgb(hex);
+  const lum=(0.299*r+0.587*g+0.114*b)/255;
+  const txtCol=lum>0.5?'#030008':'#ffffff';
+  cx.fillStyle=txtCol; cx.font='bold 16px "VT323",monospace';
+  cx.textAlign='center'; cx.textBaseline='middle';
+  cx.fillText(hex.toUpperCase(), c.width/2, c.height/2-10);
+  const {h,s,l}=rgbToHsl(r,g,b);
+  cx.font='11px "Share Tech Mono",monospace';
+  cx.fillText(`HSL(${h}°, ${s}%, ${l}%)`, c.width/2, c.height/2+12);
+}
+
+// ============================================================
+// HARMONIES
+// ============================================================
+function updateHarmonies() {
+  const c=currentPalette.colors[activeSlotIdx]||'#00ffcc';
+  const {r,g,b}=hexToRgb(c);
+  const {h,s,l}=rgbToHsl(r,g,b);
+  const harmonies=[
+    {name:'COMPLEMENT',  colors:[c, hslToHex((h+180)%360,s,l)]},
+    {name:'ANALOGOUS',   colors:[hslToHex((h+30)%360,s,l), c, hslToHex((h-30+360)%360,s,l)]},
+    {name:'TRIADIC',     colors:[c, hslToHex((h+120)%360,s,l), hslToHex((h+240)%360,s,l)]},
+    {name:'SPLIT-COMP',  colors:[c, hslToHex((h+150)%360,s,l), hslToHex((h+210)%360,s,l)]},
+    {name:'TETRADIC',    colors:[c, hslToHex((h+90)%360,s,l), hslToHex((h+180)%360,s,l), hslToHex((h+270)%360,s,l)]},
+    {name:'MONOCHROME',  colors:[hslToHex(h,s,Math.max(10,l-30)), c, hslToHex(h,s,Math.min(90,l+30))]},
+  ];
+  const grid=document.getElementById('harmonies-grid');
+  grid.innerHTML=harmonies.map(harm=>`
+    <div class="harmony-box" onclick="applyHarmony(${JSON.stringify(harm.colors).replace(/"/g,'&quot;')})" title="Apply ${harm.name}">
+      <div class="harmony-swatches">${harm.colors.map(hc=>`<div class="h-swatch" style="background:${hc};"></div>`).join('')}</div>
+      <div class="harmony-name">${harm.name}</div>
+    </div>
+  `).join('');
+}
+
+function applyHarmony(colors) {
+  currentPalette.colors = colors;
+  activeSlotIdx = 0;
+  renderEditor();
+  selectSlot(0);
+  showToast('HARMONY APPLIED');
+}
+
+// ============================================================
+// GENERATE
+// ============================================================
+function generate(type) {
+  const base=currentPalette.colors[activeSlotIdx]||'#00ffcc';
+  const {r,g,b}=hexToRgb(base);
+  const {h,s,l}=rgbToHsl(r,g,b);
+  let colors=[];
+  const n=5;
+  if (type==='analogous') {
+    colors=Array.from({length:n},(_,i)=>hslToHex((h+i*18-36+360)%360,s,l));
+  } else if (type==='complementary') {
+    colors=[base,hslToHex((h+180)%360,s,l),hslToHex(h,s,Math.max(20,l-20)),hslToHex((h+180)%360,s,Math.min(90,l+20)),hslToHex(h,Math.max(30,s-20),l)];
+  } else if (type==='triadic') {
+    colors=[base,hslToHex((h+120)%360,s,l),hslToHex((h+240)%360,s,l),hslToHex((h+120)%360,s,Math.min(90,l+15)),hslToHex((h+240)%360,s,Math.max(20,l-15))];
+  } else if (type==='split') {
+    colors=[base,hslToHex((h+150)%360,s,l),hslToHex((h+210)%360,s,l),hslToHex((h+150)%360,s,Math.min(90,l+20)),hslToHex((h+210)%360,s,Math.max(20,l-20))];
+  } else if (type==='tetradic') {
+    colors=[base,hslToHex((h+90)%360,s,l),hslToHex((h+180)%360,s,l),hslToHex((h+270)%360,s,l),base];
+  } else if (type==='monochromatic') {
+    colors=Array.from({length:n},(_,i)=>hslToHex(h,Math.max(10,s-i*5),Math.min(90,Math.max(10,l+i*14-28))));
+  } else if (type==='random') {
+    colors=Array.from({length:n},()=>hslToHex(Math.floor(Math.random()*360),40+Math.random()*60,35+Math.random()*40));
+  }
+  currentPalette.colors=colors;
+  activeSlotIdx=0;
+  renderEditor();
+  selectSlot(0);
+  showToast(type.toUpperCase()+' GENERATED');
+}
+
+// ============================================================
+// CONTRAST CHECKER
+// ============================================================
+function updateContrast() {
+  const c=currentPalette.colors[activeSlotIdx]||'#00ffcc';
+  const whites=['#ffffff','#f8f8f8','#e0e0e0'];
+  const blacks=['#000000','#111111','#030008'];
+  const checks=[...whites.map(bg=>({fg:c,bg,label:'ON '+bg})),...blacks.map(bg=>({fg:c,bg,label:'ON '+bg}))];
+  const rows=checks.slice(0,4).map(({fg,bg,label})=>{
+    const r=contrastRatio(fg,bg);
+    const grade=r>=7?'AAA':r>=4.5?'AA':r>=3?'AA(LG)':'FAIL';
+    const cls=r>=7?'grade-aaa':r>=4.5?'grade-aa':'grade-fail';
+    return `<div class="contrast-row">
+      <span class="contrast-sample" style="color:${fg};background:${bg};padding:1px 6px;">${label}</span>
+      <span class="contrast-ratio">${r.toFixed(2)}:1</span>
+      <span class="contrast-grade ${cls}">${grade}</span>
+    </div>`;
+  }).join('');
+  document.getElementById('contrast-display').innerHTML=rows;
+}
+
+// ============================================================
+// EXPORT
+// ============================================================
+function updateExportPreview() {
+  const name=document.getElementById('pal-name-input').value.trim()||'palette';
+  document.getElementById('export-box').textContent=getCSSVars(name);
+}
+
+function getCSSVars(name='palette') {
+  const slug=name.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
+  return ':root {\n'+currentPalette.colors.map((c,i)=>`  --${slug}-${i+1}: ${c};`).join('\n')+'\n}';
+}
+function getHexList() { return currentPalette.colors.join('\n'); }
+function getJSON() { return JSON.stringify({name:currentPalette.name,colors:currentPalette.colors},null,2); }
+
+function exportCSS() {
+  const name=document.getElementById('pal-name-input').value.trim()||'palette';
+  download(getCSSVars(name), name+'.css','text/css');
+  showToast('CSS EXPORTED');
+}
+function exportHexList() {
+  const name=document.getElementById('pal-name-input').value.trim()||'palette';
+  download(getHexList(), name+'.txt','text/plain');
+  showToast('HEX LIST EXPORTED');
+}
+function exportJSON() {
+  const name=document.getElementById('pal-name-input').value.trim()||'palette';
+  download(getJSON(), name+'.json','application/json');
+  showToast('JSON EXPORTED');
+}
+function copyExport() {
+  const name=document.getElementById('pal-name-input').value.trim()||'palette';
+  navigator.clipboard.writeText(getCSSVars(name)).then(()=>showToast('COPIED TO CLIPBOARD'));
+}
+function exportSwatch() {
+  const colors=currentPalette.colors;
+  const sw=80,sh=80,cols=Math.min(colors.length,8);
+  const rows=Math.ceil(colors.length/cols);
+  const exp=document.createElement('canvas');
+  exp.width=cols*sw; exp.height=rows*sh;
+  const ec=exp.getContext('2d');
+  colors.forEach((c,i)=>{
+    const x=(i%cols)*sw,y=Math.floor(i/cols)*sh;
+    ec.fillStyle=c; ec.fillRect(x,y,sw,sh);
+    ec.fillStyle=luminance(c)>0.4?'#000':'#fff';
+    ec.font='bold 10px monospace'; ec.textAlign='center';
+    ec.fillText(c.toUpperCase(),x+sw/2,y+sh-8);
+  });
+  const a=document.createElement('a');
+  a.href=exp.toDataURL('image/png');
+  a.download=(document.getElementById('pal-name-input').value||'palette')+'-swatch.png';
+  a.click();
+  showToast('SWATCH PNG EXPORTED');
+}
+
+function download(content,filename,type) {
+  const blob=new Blob([content],{type});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob); a.download=filename; a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+// ============================================================
+// COLOR MATH
+// ============================================================
+function hexToRgb(hex) {
+  hex=hex.replace('#','');
+  if(hex.length===3) hex=hex.split('').map(c=>c+c).join('');
+  const n=parseInt(hex,16);
+  return {r:(n>>16)&255, g:(n>>8)&255, b:n&255};
+}
+function rgbToHex(r,g,b) { return '#'+[r,g,b].map(v=>v.toString(16).padStart(2,'0')).join(''); }
+function rgbToHsl(r,g,b) {
+  r/=255;g/=255;b/=255;
+  const max=Math.max(r,g,b),min=Math.min(r,g,b);
+  let h=0,s=0,l=(max+min)/2;
+  if(max!==min){
+    const d=max-min;
+    s=l>0.5?d/(2-max-min):d/(max+min);
+    switch(max){case r:h=((g-b)/d+(g<b?6:0))/6;break;case g:h=((b-r)/d+2)/6;break;case b:h=((r-g)/d+4)/6;break;}
+  }
+  return {h:Math.round(h*360),s:Math.round(s*100),l:Math.round(l*100)};
+}
+function hslToHex(h,s,l) {
+  s/=100;l/=100;
+  const a=s*Math.min(l,1-l);
+  const f=n=>{const k=(n+h/30)%12;const c=l-a*Math.max(Math.min(k-3,9-k,1),-1);return Math.round(255*c).toString(16).padStart(2,'0');};
+  return '#'+f(0)+f(8)+f(4);
+}
+function luminance(hex) {
+  const {r,g,b}=hexToRgb(hex);
+  const [rs,gs,bs]=[r,g,b].map(v=>{v/=255;return v<=0.03928?v/12.92:((v+0.055)/1.055)**2.4;});
+  return 0.2126*rs+0.7152*gs+0.0722*bs;
+}
+function contrastRatio(c1,c2) {
+  const l1=luminance(c1),l2=luminance(c2);
+  return (Math.max(l1,l2)+0.05)/(Math.min(l1,l2)+0.05);
+}
+function colorName(h,s,l) {
+  if(l<10) return 'NEAR BLACK'; if(l>90) return 'NEAR WHITE';
+  if(s<15) return 'GREY';
+  const names=['RED','ORANGE','YELLOW','YELLOW-GREEN','GREEN','CYAN-GREEN','CYAN','CYAN-BLUE','BLUE','BLUE-VIOLET','VIOLET','MAGENTA','RED'];
+  return names[Math.round(h/30)%12];
+}
+
+// ============================================================
+// UTILS
+// ============================================================
+function fmtDate(ts) {
+  if(!ts) return '';
+  return new Date(ts).toLocaleDateString('en-GB',{day:'2-digit',month:'short'});
+}
+function escHtml(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+let toastTimer;
+function showToast(msg){
+  const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
+  clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2000);
+}
+</script>
+</body>
+</html>

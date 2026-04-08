@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NOTE_VAULT // v1.0</title>
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-void:        #030008;
+  --bg-base:        #0a0514;
+  --bg-panel:       #0f0a1e;
+  --bg-card:        #150d28;
+  --bg-header:      #09061a;
+  --bg-nav:         #07041a;
+  --bg-input:       #0c0820;
+  --accent-primary:   #00ffcc;
+  --accent-secondary: #ff4dd2;
+  --accent-tertiary:  #ffe600;
+  --accent-dim:       #006655;
+  --text-body:     #c0b8d4;
+  --text-muted:    #6a607a;
+  --font-display:  'VT323', 'Courier New', monospace;
+  --font-body:     'Share Tech Mono', 'Lucida Console', monospace;
+  --gap-sm: 8px; --gap-md: 16px; --gap-lg: 24px;
+  --glow-mint: 0 0 6px #00ffcc88, 0 0 14px #00ffcc44;
+  --glow-pink: 0 0 6px #ff4dd288, 0 0 14px #ff4dd244;
+  --glow-text: 0 0 8px #00ffcccc;
+  --border-bright: 1px solid #00ffcc;
+  --border-dim:    1px solid #006655;
+  --border-pink:   1px solid #ff4dd2;
+  --transition: 0.15s ease;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;}
+body{
+  background:var(--bg-base);color:var(--text-body);font-family:var(--font-body);
+  font-size:13px;line-height:1.6;display:flex;flex-direction:column;
+  background-image:
+    radial-gradient(circle at 50% 0%,#1a0040 0%,transparent 55%),
+    repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,255,204,.012) 3px,rgba(0,255,204,.012) 4px),
+    repeating-linear-gradient(90deg,transparent,transparent 3px,rgba(0,255,204,.012) 3px,rgba(0,255,204,.012) 4px);
+}
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;
+  background:repeating-linear-gradient(to bottom,transparent 0,transparent 2px,rgba(0,0,0,.07) 2px,rgba(0,0,0,.07) 4px);
+}
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:var(--bg-void);}
+::-webkit-scrollbar-thumb{background:var(--accent-dim);}
+::-webkit-scrollbar-thumb:hover{background:var(--accent-primary);}
+.blink{animation:blink 1s step-end infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+
+/* HEADER */
+#header{
+  flex-shrink:0;background:var(--bg-header);
+  background-image:
+    repeating-linear-gradient(135deg,transparent 0,transparent 20px,rgba(0,255,204,.025) 20px,rgba(0,255,204,.025) 21px),
+    radial-gradient(ellipse at 25% 50%,#1a003a 0%,transparent 65%),
+    radial-gradient(ellipse at 75% 50%,#003322 0%,transparent 60%);
+  border-bottom:2px solid var(--accent-primary);
+  padding:10px var(--gap-lg);display:flex;align-items:center;justify-content:space-between;
+  position:relative;overflow:hidden;
+}
+#header::after{
+  content:'';position:absolute;bottom:0;left:0;right:0;height:2px;
+  background:linear-gradient(to right,transparent,var(--accent-primary),var(--accent-secondary),var(--accent-primary),transparent);
+  box-shadow:var(--glow-mint);
+}
+.header-brand h1{font-family:var(--font-display);font-size:2rem;color:var(--accent-primary);text-shadow:var(--glow-text);letter-spacing:4px;line-height:1;}
+.header-brand p{font-size:.65rem;color:var(--accent-secondary);letter-spacing:3px;margin-top:2px;text-transform:uppercase;}
+.header-actions{display:flex;gap:var(--gap-sm);align-items:center;}
+
+/* MAIN LAYOUT */
+#main{flex:1;display:flex;overflow:hidden;}
+
+/* SIDEBAR */
+#sidebar{
+  width:240px;min-width:240px;background:var(--bg-panel);
+  border-right:var(--border-bright);display:flex;flex-direction:column;overflow:hidden;
+}
+
+/* SEARCH */
+#search-wrap{
+  padding:var(--gap-sm);border-bottom:var(--border-dim);flex-shrink:0;
+}
+#search{
+  width:100%;background:var(--bg-input);border:var(--border-dim);
+  color:var(--text-body);font-family:var(--font-body);font-size:12px;
+  padding:5px 8px;outline:none;transition:border-color var(--transition),box-shadow var(--transition);
+}
+#search:focus{border-color:var(--accent-primary);box-shadow:var(--glow-mint);}
+#search::placeholder{color:var(--text-muted);}
+
+/* FOLDER TREE */
+#folder-panel{flex-shrink:0;border-bottom:var(--border-dim);}
+.folder-header{
+  padding:6px var(--gap-md);display:flex;align-items:center;justify-content:space-between;
+  border-bottom:var(--border-dim);
+}
+.folder-label{font-family:var(--font-display);font-size:.95rem;color:var(--accent-secondary);letter-spacing:2px;}
+.folder-list{padding:4px 0;}
+.folder-item{
+  display:flex;align-items:center;gap:6px;padding:5px var(--gap-md);
+  cursor:pointer;font-size:.8rem;color:var(--text-muted);
+  transition:background var(--transition),color var(--transition);
+  border-left:2px solid transparent;
+}
+.folder-item:hover{background:var(--bg-card);color:var(--text-body);}
+.folder-item.active{background:var(--bg-card);color:var(--accent-primary);border-left-color:var(--accent-primary);}
+.folder-item .f-icon{font-size:.9rem;flex-shrink:0;}
+.folder-item .f-count{margin-left:auto;font-size:.65rem;color:var(--text-muted);}
+.folder-item.active .f-count{color:var(--accent-dim);}
+
+/* NOTE LIST */
+#note-list-panel{flex:1;overflow-y:auto;}
+.note-list-header{
+  padding:6px var(--gap-md);display:flex;align-items:center;justify-content:space-between;
+  border-bottom:var(--border-dim);flex-shrink:0;
+  font-family:var(--font-display);font-size:.9rem;color:var(--text-muted);letter-spacing:1px;
+}
+.note-list-header span{color:var(--accent-primary);}
+.note-item{
+  padding:8px var(--gap-md);cursor:pointer;
+  border-bottom:1px solid rgba(0,255,204,.05);
+  transition:background var(--transition);
+  border-left:2px solid transparent;
+}
+.note-item:hover{background:var(--bg-card);}
+.note-item.active{background:var(--bg-card);border-left-color:var(--accent-primary);}
+.note-title{
+  font-size:.82rem;color:var(--text-body);white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis;margin-bottom:2px;
+}
+.note-item.active .note-title{color:var(--accent-primary);}
+.note-preview-line{font-size:.68rem;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.note-meta-row{display:flex;gap:6px;align-items:center;margin-top:3px;}
+.note-date{font-size:.62rem;color:var(--text-muted);}
+.note-tag{
+  display:inline-block;background:var(--bg-panel);border:1px solid var(--accent-dim);
+  color:var(--accent-primary);font-size:.6rem;padding:1px 5px;letter-spacing:.5px;
+}
+.note-empty{
+  padding:var(--gap-lg);text-align:center;color:var(--text-muted);
+  font-size:.75rem;letter-spacing:1px;line-height:1.8;
+}
+
+/* EDITOR AREA */
+#editor-area{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden;}
+
+/* EDITOR TOOLBAR */
+#editor-toolbar{
+  background:var(--bg-nav);border-bottom:var(--border-dim);
+  padding:5px var(--gap-md);display:flex;align-items:center;gap:4px;flex-wrap:wrap;
+  flex-shrink:0;
+}
+.tool-btn{
+  background:var(--bg-card);border:var(--border-dim);color:var(--text-body);
+  font-family:var(--font-display);font-size:.9rem;padding:3px 8px;cursor:pointer;
+  transition:all var(--transition);letter-spacing:.5px;white-space:nowrap;
+}
+.tool-btn:hover{border-color:var(--accent-primary);color:var(--accent-primary);box-shadow:var(--glow-mint);}
+.tool-btn.active{background:var(--accent-primary);color:var(--bg-void);border-color:var(--accent-primary);}
+.tool-sep{width:1px;height:20px;background:var(--accent-dim);margin:0 2px;flex-shrink:0;}
+.tool-right{margin-left:auto;display:flex;gap:4px;align-items:center;}
+
+/* NOTE META BAR */
+#note-meta-bar{
+  background:var(--bg-panel);border-bottom:var(--border-dim);
+  padding:6px var(--gap-md);display:flex;align-items:center;gap:var(--gap-md);flex-wrap:wrap;
+  flex-shrink:0;
+}
+#note-title-input{
+  flex:1;background:transparent;border:none;border-bottom:1px solid var(--accent-dim);
+  color:var(--accent-primary);font-family:var(--font-display);font-size:1.4rem;
+  letter-spacing:2px;outline:none;padding:2px 0;
+  transition:border-color var(--transition);min-width:120px;
+}
+#note-title-input:focus{border-bottom-color:var(--accent-primary);}
+#note-title-input::placeholder{color:var(--text-muted);}
+
+/* Tags in meta bar */
+#tags-wrap{display:flex;flex-wrap:wrap;gap:4px;align-items:center;}
+.tag-chip{
+  display:inline-flex;align-items:center;gap:3px;
+  background:var(--bg-panel);border:1px solid var(--accent-dim);
+  color:var(--accent-primary);font-size:.65rem;padding:2px 6px;letter-spacing:.5px;
+}
+.tag-chip button{background:none;border:none;color:var(--accent-secondary);cursor:pointer;font-size:.8rem;line-height:1;padding:0;}
+#tag-input-inline{
+  background:none;border:none;border-bottom:1px solid var(--accent-dim);
+  color:var(--text-body);font-family:var(--font-body);font-size:.7rem;
+  outline:none;width:80px;padding:1px 2px;
+}
+
+/* Folder selector */
+#folder-select{
+  background:var(--bg-input);border:var(--border-dim);color:var(--text-body);
+  font-family:var(--font-body);font-size:.75rem;padding:3px 6px;outline:none;
+  transition:border-color var(--transition);
+}
+#folder-select:focus{border-color:var(--accent-primary);}
+#folder-select option{background:var(--bg-input);}
+
+/* EDITOR SPLIT */
+#editor-split{flex:1;display:flex;overflow:hidden;}
+#write-pane{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+#editor{
+  flex:1;background:var(--bg-void);color:var(--text-body);font-family:var(--font-body);
+  font-size:13px;line-height:1.85;padding:var(--gap-lg);border:none;outline:none;
+  resize:none;width:100%;overflow-y:auto;tab-size:2;
+}
+#editor::placeholder{color:var(--text-muted);}
+
+/* STATUS BAR */
+#statusbar{
+  background:var(--bg-nav);border-top:var(--border-dim);
+  padding:4px var(--gap-md);display:flex;gap:var(--gap-lg);
+  font-size:.68rem;color:var(--text-muted);letter-spacing:1px;flex-shrink:0;
+}
+#statusbar span{color:var(--accent-primary);}
+.status-saved{color:var(--accent-primary) !important;}
+.status-unsaved{color:var(--accent-secondary) !important;}
+
+/* PREVIEW PANE */
+#preview-pane{
+  flex:1;overflow-y:auto;background:var(--bg-base);
+  border-left:var(--border-dim);display:none;padding:var(--gap-lg);
+  background-image:
+    radial-gradient(circle at 50% 0%,#1a0040 0%,transparent 60%),
+    repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,255,204,.012) 3px,rgba(0,255,204,.012) 4px),
+    repeating-linear-gradient(90deg,transparent,transparent 3px,rgba(0,255,204,.012) 3px,rgba(0,255,204,.012) 4px);
+}
+#preview-content{max-width:680px;margin:0 auto;}
+#preview-content h1{font-family:var(--font-display);font-size:2rem;color:var(--accent-primary);text-shadow:var(--glow-text);letter-spacing:2px;margin-bottom:var(--gap-md);border-bottom:var(--border-bright);padding-bottom:var(--gap-sm);}
+#preview-content h2{font-family:var(--font-display);font-size:1.5rem;color:var(--accent-primary);letter-spacing:1px;margin:var(--gap-lg) 0 var(--gap-sm);}
+#preview-content h3{font-family:var(--font-display);font-size:1.1rem;color:var(--accent-secondary);letter-spacing:1px;margin:var(--gap-md) 0 var(--gap-sm);}
+#preview-content p{margin-bottom:var(--gap-md);}
+#preview-content a{color:#ff99ee;}
+#preview-content a:hover{color:#fff;}
+#preview-content blockquote{border-left:3px solid var(--accent-secondary);background:var(--bg-card);padding:var(--gap-sm) var(--gap-md);margin:var(--gap-md) 0;font-style:italic;box-shadow:var(--glow-pink);}
+#preview-content code{background:var(--bg-card);border:var(--border-dim);color:var(--accent-tertiary);padding:1px 5px;font-family:var(--font-body);font-size:.9em;}
+#preview-content pre{background:var(--bg-void);border:var(--border-bright);box-shadow:var(--glow-mint);padding:var(--gap-md);overflow-x:auto;margin:var(--gap-md) 0;color:var(--accent-primary);}
+#preview-content pre code{background:none;border:none;padding:0;color:inherit;}
+#preview-content ul{padding-left:1.2em;margin-bottom:var(--gap-md);}
+#preview-content ul li::marker{color:var(--accent-primary);}
+#preview-content ol{padding-left:1.2em;margin-bottom:var(--gap-md);}
+#preview-content hr{border:none;border-top:var(--border-dim);margin:var(--gap-md) 0;}
+#preview-content table{width:100%;border-collapse:collapse;margin-bottom:var(--gap-md);}
+#preview-content th{background:var(--bg-card);border:var(--border-dim);padding:6px var(--gap-sm);color:var(--accent-primary);font-family:var(--font-display);letter-spacing:1px;}
+#preview-content td{border:var(--border-dim);padding:5px var(--gap-sm);}
+#preview-content tr:nth-child(even) td{background:rgba(0,255,204,.03);}
+
+/* WELCOME STATE */
+#welcome{
+  flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;
+  gap:var(--gap-lg);padding:var(--gap-lg);text-align:center;
+}
+.w-title{font-family:var(--font-display);font-size:2rem;color:var(--accent-primary);text-shadow:var(--glow-text);letter-spacing:4px;}
+.w-sub{font-size:.75rem;color:var(--text-muted);letter-spacing:2px;line-height:1.8;max-width:400px;}
+.shortcuts-box{
+  background:var(--bg-card);border:var(--border-dim);padding:var(--gap-md);
+  display:grid;grid-template-columns:1fr 1fr;gap:6px var(--gap-lg);
+  font-size:.72rem;text-align:left;
+}
+.sc-key{color:var(--accent-primary);letter-spacing:1px;}
+.sc-desc{color:var(--text-muted);}
+
+/* MODAL */
+#modal-overlay{display:none;position:fixed;inset:0;background:rgba(3,0,8,.88);z-index:1000;align-items:center;justify-content:center;}
+#modal-overlay.open{display:flex;}
+#modal{background:var(--bg-panel);border:var(--border-bright);box-shadow:var(--glow-mint);padding:var(--gap-lg);max-width:420px;width:90%;}
+#modal h2{font-family:var(--font-display);font-size:1.4rem;color:var(--accent-primary);letter-spacing:2px;margin-bottom:var(--gap-md);}
+#modal p{font-size:.82rem;color:var(--text-body);margin-bottom:var(--gap-md);}
+#modal input{width:100%;background:var(--bg-input);border:var(--border-dim);color:var(--text-body);font-family:var(--font-body);font-size:13px;padding:6px 8px;outline:none;margin-bottom:var(--gap-md);}
+#modal input:focus{border-color:var(--accent-primary);}
+.modal-actions{display:flex;gap:var(--gap-sm);justify-content:flex-end;}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:5px;background:transparent;border:var(--border-bright);color:var(--accent-primary);padding:5px 12px;font-family:var(--font-display);font-size:.95rem;letter-spacing:1px;cursor:pointer;transition:background var(--transition),box-shadow var(--transition);}
+.btn:hover{background:var(--accent-primary);color:var(--bg-void);box-shadow:var(--glow-mint);}
+.btn-pink{border-color:var(--accent-secondary);color:var(--accent-secondary);}
+.btn-pink:hover{background:var(--accent-secondary);color:var(--bg-void);box-shadow:var(--glow-pink);}
+.btn-sm{padding:3px 8px;font-size:.82rem;}
+.btn-danger{border-color:#ff3333;color:#ff3333;}
+.btn-danger:hover{background:#ff3333;color:#fff;}
+
+/* TOAST */
+#toast{position:fixed;bottom:20px;right:20px;background:var(--bg-card);border:var(--border-bright);box-shadow:var(--glow-mint);color:var(--accent-primary);font-family:var(--font-display);font-size:1rem;letter-spacing:1px;padding:8px 16px;z-index:9000;opacity:0;transform:translateY(8px);transition:opacity .2s,transform .2s;pointer-events:none;}
+#toast.show{opacity:1;transform:translateY(0);}
+</style>
+</head>
+<body>
+
+<div id="header">
+  <div class="header-brand">
+    <h1>NOTE_VAULT<span class="blink">_</span></h1>
+    <p>// retro markdown notes // v1.0</p>
+  </div>
+  <div class="header-actions">
+    <button class="btn btn-sm" onclick="newNote()">+ NEW NOTE</button>
+    <button class="btn btn-sm" onclick="openFolderModal()">+ FOLDER</button>
+    <button class="btn btn-sm btn-pink" onclick="exportNote()">⬇ EXPORT</button>
+  </div>
+</div>
+
+<div id="main">
+
+  <!-- SIDEBAR -->
+  <div id="sidebar">
+    <div id="search-wrap">
+      <input type="text" id="search" placeholder="🔍 search notes..." oninput="filterNotes()">
+    </div>
+
+    <div id="folder-panel">
+      <div class="folder-header">
+        <span class="folder-label">// FOLDERS</span>
+        <button class="btn btn-sm" onclick="openFolderModal()" title="New folder">+</button>
+      </div>
+      <div class="folder-list" id="folder-list"></div>
+    </div>
+
+    <div id="note-list-panel">
+      <div class="note-list-header">
+        NOTES &nbsp;<span id="note-count">0</span>
+        <select id="sort-select" style="background:var(--bg-input);border:var(--border-dim);color:var(--text-muted);font-family:var(--font-body);font-size:.65rem;padding:2px 4px;outline:none;" onchange="renderNoteList()">
+          <option value="updated">RECENT</option>
+          <option value="created">CREATED</option>
+          <option value="alpha">A–Z</option>
+        </select>
+      </div>
+      <div id="note-list"></div>
+    </div>
+  </div>
+
+  <!-- EDITOR -->
+  <div id="editor-area">
+
+    <!-- TOOLBAR -->
+    <div id="editor-toolbar">
+      <div class="toolbar-group" style="display:flex;gap:2px;">
+        <button class="tool-btn" onclick="ins('# ','')">H1</button>
+        <button class="tool-btn" onclick="ins('## ','')">H2</button>
+        <button class="tool-btn" onclick="ins('### ','')">H3</button>
+      </div>
+      <div class="tool-sep"></div>
+      <button class="tool-btn" onclick="wrap('**','**')"><b>B</b></button>
+      <button class="tool-btn" onclick="wrap('*','*')"><i>I</i></button>
+      <button class="tool-btn" onclick="wrap('~~','~~')"><s>S</s></button>
+      <button class="tool-btn" onclick="wrap('`','`')">&#x60;</button>
+      <div class="tool-sep"></div>
+      <button class="tool-btn" onclick="ins('> ','')">❝</button>
+      <button class="tool-btn" onclick="ins('- ','')">—</button>
+      <button class="tool-btn" onclick="ins('1. ','')">1.</button>
+      <button class="tool-btn" onclick="insBlock('```\n','\n```')">{ }</button>
+      <button class="tool-btn" onclick="ins('---\n','')">HR</button>
+      <button class="tool-btn" onclick="ins('| Col1 | Col2 |\n|------|------|\n| val  | val  |\n','')">⊞</button>
+      <div class="tool-sep"></div>
+      <button class="tool-btn" onclick="ins('- [ ] ','')">☐</button>
+      <div class="tool-right">
+        <button class="tool-btn" id="preview-toggle" onclick="togglePreview()">👁 PREVIEW</button>
+        <button class="tool-btn btn-danger" onclick="deleteCurrentNote()">✕ DEL</button>
+      </div>
+    </div>
+
+    <!-- META BAR -->
+    <div id="note-meta-bar">
+      <input type="text" id="note-title-input" placeholder="NOTE TITLE..." oninput="onMetaChange()">
+      <select id="folder-select" onchange="onMetaChange()">
+        <option value="">— FOLDER —</option>
+      </select>
+      <div id="tags-wrap">
+        <input type="text" id="tag-input-inline" placeholder="+ tag" title="Press Enter to add tag">
+      </div>
+    </div>
+
+    <!-- SPLIT -->
+    <div id="editor-split">
+      <div id="write-pane">
+        <textarea id="editor" placeholder="Start writing in Markdown...
+
+# Heading 1
+## Heading 2
+**bold**  *italic*  `code`
+> blockquote
+- list item
+- [ ] task checkbox
+---
+| Table | Col |
+|-------|-----|
+| val   | val |
+
+Everything else becomes a paragraph." oninput="onEditorInput()" onscroll="syncScroll()"></textarea>
+        <div id="statusbar">
+          WORDS: <span id="wc-w">0</span> &nbsp;|&nbsp;
+          CHARS: <span id="wc-c">0</span> &nbsp;|&nbsp;
+          LINES: <span id="wc-l">0</span> &nbsp;|&nbsp;
+          SAVED: <span id="save-status" class="status-saved">✓</span>
+        </div>
+      </div>
+      <div id="preview-pane">
+        <div id="preview-content"></div>
+      </div>
+    </div>
+
+    <!-- WELCOME -->
+    <div id="welcome" style="display:none;">
+      <div class="w-title">NOTE_VAULT</div>
+      <p class="w-sub">Your encrypted-feeling retro notebook. Create a note or select one from the list to begin.</p>
+      <div class="shortcuts-box">
+        <span class="sc-key">Ctrl+S</span><span class="sc-desc">Save note</span>
+        <span class="sc-key">Ctrl+N</span><span class="sc-desc">New note</span>
+        <span class="sc-key">Ctrl+P</span><span class="sc-desc">Toggle preview</span>
+        <span class="sc-key">Ctrl+E</span><span class="sc-desc">Export note</span>
+        <span class="sc-key">Ctrl+F</span><span class="sc-desc">Focus search</span>
+        <span class="sc-key">Ctrl+D</span><span class="sc-desc">Delete note</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- FOLDER MODAL -->
+<div id="modal-overlay">
+  <div id="modal">
+    <h2 id="modal-title">NEW FOLDER</h2>
+    <p id="modal-body">Enter a name for the new folder:</p>
+    <input type="text" id="modal-input" placeholder="Folder name..." maxlength="32">
+    <div class="modal-actions">
+      <button class="btn btn-sm" onclick="closeModal()">CANCEL</button>
+      <button class="btn btn-sm" id="modal-confirm" onclick="confirmModal()">CREATE</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ============================================================
+// STATE
+// ============================================================
+let notes    = JSON.parse(localStorage.getItem('nv_notes')   || '[]');
+let folders  = JSON.parse(localStorage.getItem('nv_folders') || '["General","Ideas","Archive"]');
+let currentNoteId = null;
+let currentFolder = null; // null = all
+let previewOpen   = false;
+let tags = [];
+let searchQ = '';
+let unsaved = false;
+let autoSaveTimer = null;
+let modalMode = 'folder';
+let renameFolderTarget = null;
+
+// ============================================================
+// INIT
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => {
+  renderFolders();
+  renderNoteList();
+  showWelcome();
+  setupTagInput();
+  setupKeyboard();
+  buildFolderSelect();
+});
+
+// ============================================================
+// FOLDERS
+// ============================================================
+function renderFolders() {
+  const list = document.getElementById('folder-list');
+  const allCount = notes.length;
+  let html = `<div class="folder-item ${currentFolder===null?'active':''}" onclick="selectFolder(null)">
+    <span class="f-icon">📂</span> ALL NOTES <span class="f-count">${allCount}</span>
+  </div>`;
+  folders.forEach(f => {
+    const cnt = notes.filter(n=>n.folder===f).length;
+    html += `<div class="folder-item ${currentFolder===f?'active':''}" onclick="selectFolder('${escHtml(f)}')">
+      <span class="f-icon">📁</span> ${escHtml(f)}
+      <span class="f-count">${cnt}</span>
+      <button onclick="confirmDeleteFolder('${escHtml(f)}');event.stopPropagation();" title="Delete folder"
+        style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:.75rem;margin-left:4px;opacity:0;">✕</button>
+    </div>`;
+  });
+  list.innerHTML = html;
+  // Show delete btn on hover
+  list.querySelectorAll('.folder-item').forEach(el => {
+    const btn = el.querySelector('button');
+    if (!btn) return;
+    el.addEventListener('mouseenter', ()=>btn.style.opacity='1');
+    el.addEventListener('mouseleave', ()=>btn.style.opacity='0');
+  });
+}
+
+function selectFolder(f) {
+  currentFolder = f;
+  currentNoteId = null;
+  renderFolders();
+  renderNoteList();
+  showWelcome();
+}
+
+function buildFolderSelect() {
+  const sel = document.getElementById('folder-select');
+  sel.innerHTML = '<option value="">— FOLDER —</option>' +
+    folders.map(f => `<option value="${escHtml(f)}">${escHtml(f)}</option>`).join('');
+}
+
+function openFolderModal() {
+  modalMode = 'folder';
+  renameFolderTarget = null;
+  document.getElementById('modal-title').textContent = 'NEW FOLDER';
+  document.getElementById('modal-body').textContent  = 'Enter a name for the new folder:';
+  document.getElementById('modal-input').value = '';
+  document.getElementById('modal-confirm').textContent = 'CREATE';
+  document.getElementById('modal-overlay').classList.add('open');
+  document.getElementById('modal-input').focus();
+}
+
+function confirmModal() {
+  const val = document.getElementById('modal-input').value.trim();
+  if (!val) return;
+  if (modalMode === 'folder') {
+    if (folders.includes(val)) { showToast('FOLDER ALREADY EXISTS'); return; }
+    folders.push(val);
+    saveFolders();
+    renderFolders();
+    buildFolderSelect();
+    showToast('FOLDER CREATED');
+  }
+  closeModal();
+}
+
+function confirmDeleteFolder(f) {
+  if (!confirm(`Delete folder "${f}"? Notes will move to no folder.`)) return;
+  folders = folders.filter(x=>x!==f);
+  notes.forEach(n=>{ if(n.folder===f) n.folder=''; });
+  saveNotes();
+  saveFolders();
+  if (currentFolder===f) currentFolder=null;
+  renderFolders();
+  renderNoteList();
+  buildFolderSelect();
+  showToast('FOLDER DELETED');
+}
+
+function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
+
+// Close on backdrop
+document.getElementById('modal-overlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('modal-overlay')) closeModal();
+});
+document.getElementById('modal-input').addEventListener('keydown', e => {
+  if (e.key==='Enter') confirmModal();
+  if (e.key==='Escape') closeModal();
+});
+
+// ============================================================
+// NOTES LIST
+// ============================================================
+function getVisibleNotes() {
+  let list = notes.slice();
+  if (currentFolder !== null) list = list.filter(n => n.folder === currentFolder);
+  if (searchQ) {
+    const q = searchQ.toLowerCase();
+    list = list.filter(n =>
+      n.title.toLowerCase().includes(q) ||
+      (n.content||'').toLowerCase().includes(q) ||
+      (n.tags||[]).some(t=>t.toLowerCase().includes(q))
+    );
+  }
+  const sort = document.getElementById('sort-select').value;
+  if (sort==='updated') list.sort((a,b)=>b.updatedAt-a.updatedAt);
+  else if (sort==='created') list.sort((a,b)=>b.createdAt-a.createdAt);
+  else list.sort((a,b)=>a.title.localeCompare(b.title));
+  return list;
+}
+
+function renderNoteList() {
+  const list = getVisibleNotes();
+  const container = document.getElementById('note-list');
+  document.getElementById('note-count').textContent = list.length;
+  if (!list.length) {
+    container.innerHTML = `<div class="note-empty">NO NOTES FOUND.<br>${searchQ?'TRY DIFFERENT SEARCH.':'CREATE ONE!'}</div>`;
+    return;
+  }
+  container.innerHTML = list.map(n => {
+    const tagsHtml = (n.tags||[]).slice(0,3).map(t=>`<span class="note-tag">${escHtml(t)}</span>`).join('');
+    const preview = (n.content||'').replace(/[#*`>\-]/g,'').trim().slice(0,60);
+    return `<div class="note-item ${n.id===currentNoteId?'active':''}" onclick="loadNote('${n.id}')">
+      <div class="note-title">${escHtml(n.title||'Untitled')}</div>
+      <div class="note-preview-line">${escHtml(preview)||'&nbsp;'}</div>
+      <div class="note-meta-row">
+        <span class="note-date">${fmtDate(n.updatedAt)}</span>
+        ${tagsHtml}
+      </div>
+    </div>`;
+  }).join('');
+  const active = container.querySelector('.note-item.active');
+  if (active) active.scrollIntoView({block:'nearest'});
+}
+
+function filterNotes() {
+  searchQ = document.getElementById('search').value;
+  renderNoteList();
+}
+
+// ============================================================
+// NOTE CRUD
+// ============================================================
+function genId() { return 'n_'+Date.now()+'_'+Math.random().toString(36).slice(2,7); }
+
+function newNote() {
+  if (unsaved && currentNoteId) autoSaveNow();
+  const now = Date.now();
+  const note = {
+    id: genId(),
+    title: '',
+    content: '',
+    tags: [],
+    folder: currentFolder || '',
+    createdAt: now,
+    updatedAt: now,
+  };
+  notes.unshift(note);
+  saveNotes();
+  loadNote(note.id);
+  document.getElementById('note-title-input').focus();
+  showToast('NEW NOTE CREATED');
+}
+
+function loadNote(id) {
+  if (unsaved && currentNoteId && currentNoteId !== id) autoSaveNow();
+  const note = notes.find(n=>n.id===id);
+  if (!note) return;
+  currentNoteId = id;
+  tags = note.tags ? [...note.tags] : [];
+  document.getElementById('note-title-input').value = note.title || '';
+  document.getElementById('folder-select').value = note.folder || '';
+  document.getElementById('editor').value = note.content || '';
+  renderTagChips();
+  updateWordCount();
+  updatePreview();
+  setSaved(true);
+
+  document.getElementById('welcome').style.display = 'none';
+  document.getElementById('editor-toolbar').style.display = 'flex';
+  document.getElementById('note-meta-bar').style.display = 'flex';
+  document.getElementById('editor-split').style.display = 'flex';
+
+  renderNoteList();
+}
+
+function deleteCurrentNote() {
+  if (!currentNoteId) return;
+  if (!confirm('Delete this note? Cannot be undone.')) return;
+  notes = notes.filter(n=>n.id!==currentNoteId);
+  saveNotes();
+  currentNoteId = null;
+  tags = [];
+  renderFolders();
+  renderNoteList();
+  showWelcome();
+  showToast('NOTE DELETED');
+}
+
+function getCurrentNote() { return notes.find(n=>n.id===currentNoteId); }
+
+function autoSaveNow() {
+  clearTimeout(autoSaveTimer);
+  saveCurrentNote();
+}
+
+function saveCurrentNote() {
+  if (!currentNoteId) return;
+  const note = getCurrentNote();
+  if (!note) return;
+  note.title   = document.getElementById('note-title-input').value || 'Untitled';
+  note.content = document.getElementById('editor').value;
+  note.tags    = [...tags];
+  note.folder  = document.getElementById('folder-select').value;
+  note.updatedAt = Date.now();
+  saveNotes();
+  setSaved(true);
+  renderNoteList();
+  renderFolders();
+}
+
+function setSaved(saved) {
+  unsaved = !saved;
+  const el = document.getElementById('save-status');
+  el.textContent = saved ? '✓' : '●';
+  el.className = saved ? 'status-saved' : 'status-unsaved';
+}
+
+function onEditorInput() {
+  updateWordCount();
+  setSaved(false);
+  clearTimeout(autoSaveTimer);
+  autoSaveTimer = setTimeout(saveCurrentNote, 1500);
+  if (previewOpen) updatePreview();
+}
+
+function onMetaChange() {
+  setSaved(false);
+  clearTimeout(autoSaveTimer);
+  autoSaveTimer = setTimeout(saveCurrentNote, 800);
+}
+
+function updateWordCount() {
+  const text = document.getElementById('editor').value;
+  document.getElementById('wc-w').textContent = text.trim() ? text.trim().split(/\s+/).length : 0;
+  document.getElementById('wc-c').textContent = text.length;
+  document.getElementById('wc-l').textContent = text.split('\n').length;
+}
+
+function showWelcome() {
+  document.getElementById('welcome').style.display = 'flex';
+  document.getElementById('editor-toolbar').style.display = 'none';
+  document.getElementById('note-meta-bar').style.display = 'none';
+  document.getElementById('editor-split').style.display = 'none';
+}
+
+// ============================================================
+// TAGS
+// ============================================================
+function setupTagInput() {
+  const inp = document.getElementById('tag-input-inline');
+  inp.addEventListener('keydown', e => {
+    if (e.key==='Enter'||e.key===',') {
+      e.preventDefault();
+      const v = inp.value.trim().replace(/,/g,'');
+      if (v) { addTag(v); inp.value=''; onMetaChange(); }
+    } else if (e.key==='Backspace' && inp.value==='' && tags.length) {
+      removeTag(tags[tags.length-1]); onMetaChange();
+    }
+  });
+}
+
+function addTag(v) { if(!v||tags.includes(v)) return; tags.push(v); renderTagChips(); }
+function removeTag(v) { tags=tags.filter(t=>t!==v); renderTagChips(); }
+function renderTagChips() {
+  const wrap = document.getElementById('tags-wrap');
+  wrap.querySelectorAll('.tag-chip').forEach(el=>el.remove());
+  const inp = document.getElementById('tag-input-inline');
+  tags.forEach(t => {
+    const chip = document.createElement('span');
+    chip.className='tag-chip';
+    chip.innerHTML=`${escHtml(t)} <button onclick="removeTag('${escHtml(t)}');onMetaChange();" title="Remove">×</button>`;
+    wrap.insertBefore(chip, inp);
+  });
+}
+
+// ============================================================
+// PREVIEW
+// ============================================================
+function togglePreview() {
+  previewOpen = !previewOpen;
+  const pp = document.getElementById('preview-pane');
+  const btn = document.getElementById('preview-toggle');
+  const wp = document.getElementById('write-pane');
+  if (previewOpen) {
+    pp.style.display='block'; wp.style.flex='0 0 50%'; btn.classList.add('active');
+    updatePreview();
+  } else {
+    pp.style.display='none'; wp.style.flex='1'; btn.classList.remove('active');
+  }
+}
+
+function updatePreview() {
+  const content = document.getElementById('editor').value;
+  document.getElementById('preview-content').innerHTML = mdToHtml(content);
+  // Checkbox rendering
+  document.querySelectorAll('#preview-content li').forEach(li => {
+    if (li.innerHTML.startsWith('[ ]')) {
+      li.innerHTML = '<input type="checkbox" disabled> ' + li.innerHTML.slice(3);
+    } else if (li.innerHTML.startsWith('[x]')||li.innerHTML.startsWith('[X]')) {
+      li.innerHTML = '<input type="checkbox" checked disabled> ' + li.innerHTML.slice(3);
+    }
+  });
+}
+
+function syncScroll() {
+  if (!previewOpen) return;
+  const ed = document.getElementById('editor');
+  const pp = document.getElementById('preview-pane');
+  const ratio = ed.scrollTop / (ed.scrollHeight - ed.clientHeight || 1);
+  pp.scrollTop = ratio * (pp.scrollHeight - pp.clientHeight);
+}
+
+// ============================================================
+// MARKDOWN PARSER
+// ============================================================
+function mdToHtml(md) {
+  if (!md.trim()) return '';
+  const lines = md.split('\n');
+  let html = '', inList = false, inOl = false, inCode = false, codeBuf = '';
+  for (let i=0;i<lines.length;i++) {
+    let line = lines[i];
+    if (line.trim().startsWith('```')) {
+      if (!inCode) { inCode=true; codeBuf=''; }
+      else { inCode=false; html+=`<pre><code>${escHtml(codeBuf.trim())}</code></pre>`; codeBuf=''; }
+      continue;
+    }
+    if (inCode) { codeBuf+=line+'\n'; continue; }
+    if (inList && !/^- /.test(line.trim())) { html+='</ul>'; inList=false; }
+    if (inOl && !/^\d+\. /.test(line.trim())) { html+='</ol>'; inOl=false; }
+    // Table
+    if (/^\|/.test(line)) {
+      if (/^[\|\-\s]+$/.test(line)) continue;
+      const cells = line.split('|').filter((_,i,a)=>i>0&&i<a.length-1).map(c=>`<td>${inlineM(c.trim())}</td>`).join('');
+      const isHeader = lines[i+1]&&/^[\|\-\s]+$/.test(lines[i+1]);
+      html += isHeader ? `<table><thead><tr>${cells.replace(/<td>/g,'<th>').replace(/<\/td>/g,'</th>')}</tr></thead><tbody>` :
+                         `<tr>${cells}</tr>`;
+      if (i===lines.length-1||!/^\|/.test(lines[i+1]||'')) html+='</tbody></table>';
+      continue;
+    }
+    if (/^---+$/.test(line.trim())) { html+='<hr>'; continue; }
+    if (/^### (.+)/.test(line)) { html+=`<h3>${inlineM(line.slice(4))}</h3>`; continue; }
+    if (/^## (.+)/.test(line))  { html+=`<h2>${inlineM(line.slice(3))}</h2>`; continue; }
+    if (/^# (.+)/.test(line))   { html+=`<h1>${inlineM(line.slice(2))}</h1>`; continue; }
+    if (/^> (.+)/.test(line))   { html+=`<blockquote>${inlineM(line.slice(2))}</blockquote>`; continue; }
+    if (/^\d+\. (.+)/.test(line)) {
+      if (!inOl) { html+='<ol>'; inOl=true; }
+      html+=`<li>${inlineM(line.replace(/^\d+\. /,''))}</li>`; continue;
+    }
+    if (/^- (.+)/.test(line)) {
+      if (!inList) { html+='<ul>'; inList=true; }
+      html+=`<li>${inlineM(line.slice(2))}</li>`; continue;
+    }
+    if (line.trim()==='') continue;
+    html+=`<p>${inlineM(line)}</p>`;
+  }
+  if (inList) html+='</ul>';
+  if (inOl) html+='</ol>';
+  if (inCode) html+=`<pre><code>${escHtml(codeBuf.trim())}</code></pre>`;
+  return html;
+}
+
+function inlineM(t) {
+  t = t.replace(/\[([^\]]+)\]\(([^)]+)\)/g,'<a href="$2" target="_blank">$1</a>');
+  t = t.replace(/~~(.+?)~~/g,'<s>$1</s>');
+  t = t.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');
+  t = t.replace(/\*(.+?)\*/g,'<em>$1</em>');
+  t = t.replace(/`(.+?)`/g,'<code>$1</code>');
+  return t;
+}
+
+// ============================================================
+// EDITOR TOOLBAR
+// ============================================================
+function getEd() { return document.getElementById('editor'); }
+
+function ins(before, after) {
+  const ed = getEd();
+  const s = ed.selectionStart;
+  const ls = ed.value.lastIndexOf('\n',s-1)+1;
+  const le = (ed.value.indexOf('\n',s)+1||ed.value.length+1)-1;
+  const line = ed.value.slice(ls,le);
+  ed.value = ed.value.slice(0,ls)+before+line+after+ed.value.slice(le);
+  ed.selectionStart = ed.selectionEnd = ls+before.length+line.length+after.length;
+  ed.focus(); onEditorInput();
+}
+
+function wrap(before, after) {
+  const ed = getEd();
+  const s = ed.selectionStart, e = ed.selectionEnd;
+  const sel = ed.value.slice(s,e)||'text';
+  ed.value = ed.value.slice(0,s)+before+sel+after+ed.value.slice(e);
+  ed.selectionStart = s+before.length;
+  ed.selectionEnd = s+before.length+sel.length;
+  ed.focus(); onEditorInput();
+}
+
+function insBlock(before, after) {
+  const ed = getEd();
+  const s = ed.selectionStart, e = ed.selectionEnd;
+  const sel = ed.value.slice(s,e)||'code here';
+  ed.value = ed.value.slice(0,s)+before+sel+after+ed.value.slice(e);
+  ed.selectionStart = s+before.length;
+  ed.selectionEnd = s+before.length+sel.length;
+  ed.focus(); onEditorInput();
+}
+
+// ============================================================
+// EXPORT
+// ============================================================
+function exportNote() {
+  if (!currentNoteId) { showToast('NO NOTE SELECTED'); return; }
+  autoSaveNow();
+  const note = getCurrentNote();
+  const html = `<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8">
+<title>${escHtml(note.title||'Note')}</title>
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head><body>
+<div id="container"><div id="header"><div><div id="site-title">NOTE_VAULT</div></div></div>
+<div id="flex"><main>
+<div style="margin-bottom:12px;font-size:.7rem;color:var(--text-muted);">${fmtDate(note.updatedAt)} ${(note.tags||[]).map(t=>`<span class="tag">${escHtml(t)}</span>`).join(' ')}</div>
+<h1>${escHtml(note.title||'Untitled')}</h1>
+${mdToHtml(note.content||'')}
+</main></div>
+<div id="footer"><div class="footer-row">Exported from NOTE_VAULT</div></div>
+</div></body></html>`;
+  const blob = new Blob([html],{type:'text/html'});
+  const a = document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=(note.title||'note').toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'')+'.html';
+  a.click();
+  showToast('NOTE EXPORTED');
+}
+
+// ============================================================
+// KEYBOARD
+// ============================================================
+function setupKeyboard() {
+  document.addEventListener('keydown', e => {
+    if (e.ctrlKey||e.metaKey) {
+      if (e.key==='s') { e.preventDefault(); autoSaveNow(); showToast('SAVED ✓'); }
+      if (e.key==='n') { e.preventDefault(); newNote(); }
+      if (e.key==='p') { e.preventDefault(); if(currentNoteId) togglePreview(); }
+      if (e.key==='e') { e.preventDefault(); exportNote(); }
+      if (e.key==='f') { e.preventDefault(); document.getElementById('search').focus(); }
+      if (e.key==='d') { e.preventDefault(); deleteCurrentNote(); }
+    }
+  });
+}
+
+// ============================================================
+// STORAGE
+// ============================================================
+function saveNotes()   { localStorage.setItem('nv_notes',   JSON.stringify(notes)); }
+function saveFolders() { localStorage.setItem('nv_folders', JSON.stringify(folders)); }
+
+// ============================================================
+// UTILS
+// ============================================================
+function fmtDate(ts) {
+  if (!ts) return '';
+  const d = new Date(ts);
+  return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+}
+function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+let toastTimer;
+function showToast(msg) {
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),2000);
+}
+</script>
+</body>
+</html>
